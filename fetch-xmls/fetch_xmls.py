@@ -56,7 +56,7 @@ def main():
     badqueries = []
 
     for index, query in enumerate(queries):
-        logger.info("Running Query", index, "of", len(queries))
+        logger.info(f'Running Query {index} of {len(queries)}')
         try:
             pipeline = ncbi.new_pipeline()
             biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
