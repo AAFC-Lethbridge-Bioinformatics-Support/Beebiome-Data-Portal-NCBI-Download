@@ -17,12 +17,14 @@ entrezpy.log.logger.set_level(LOGGING_LEVEL)
 
 formatter = logging.Formatter(fmt='%(asctime)s [%(levelname)-8s] %(message)s',
                               datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger(__name__)
+logger.setLevel(LOGGING_LEVEL)
 
 # make queries from taxon_name.json
 def make_queries():
     with open('taxon-names.json', 'r') as f:
         names = json.load(f)
-    logging.debug(str(len(names)) + " names loaded from names.json")
+    logger.info(str(len(names)) + " names loaded from names.json")
 
     queries = []
     first = True
@@ -54,7 +56,7 @@ def main():
     badqueries = []
 
     for index, query in enumerate(queries):
-        logging.info("Running Query", index, "of", len(queries))
+        logger.info("Running Query", index, "of", len(queries))
         try:
             pipeline = ncbi.new_pipeline()
             biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
@@ -70,14 +72,14 @@ def main():
             dump = json.dumps({'exception': template.format(type(e).__name__, e.args)}, indent=4)
             with open(f'query-{index}-error-{runtime_timestamp}-run.json', "w") as f:
                     f.write(dump)
-            logging.error(f'Error in query {index} - uncaught exception: {e}, ignoring & continuing...')
+            logger.error(f'Error in query {index} - uncaught exception: {e}, ignoring & continuing...')
             badqueries.append(index)
             continue
 
     if (len(badqueries) >= 1):
-        logging.error("The following queries (IDs) failed: " + str(badqueries))
+        logger.error("The following queries (IDs) failed: " + str(badqueries))
     else:
-        logging.info("All queries ran successfully")
+        logger.info("All queries ran successfully")
 
     return f'/downloaded-XMLS/run-{runtime_timestamp}/'
 

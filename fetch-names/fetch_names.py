@@ -3,6 +3,7 @@ import entrezpy.conduit
 import entrezpy.log.logger
 from taxon_analyzer import TaxonAnalyzer
 from dotenv import load_dotenv
+import logging
 import json
 import os
 load_dotenv()
@@ -11,7 +12,12 @@ LOGGING_LEVEL = os.getenv('NCBI_DOWNLOAD_LOGGING_LEVEL')
 API_KEY = os.getenv('NCBI_API_KEY')
 CONTACT_EMAIL = os.getenv('NCBI_API_DEV_CONTACT_EMAIL')
 
+formatter = logging.Formatter(fmt='%(asctime)s [%(levelname)-8s] %(message)s',
+                              datefmt='%Y-%m-%d %H:%M:%S')
+
 entrezpy.log.logger.set_level(LOGGING_LEVEL)
+logger = logging.getLogger(__name__)
+logger.setLevel(LOGGING_LEVEL)
 
 def main():
     ncbi = entrezpy.conduit.Conduit(CONTACT_EMAIL, apikey=API_KEY)
@@ -26,8 +32,7 @@ def main():
 
     res = (ncbi.run(pipeline)).get_result()
 
-    print("Count of names found: " + str(len(res.taxon_names)))
-    print("Writing to taxon-names.json")
+    logger.info("Count of names found: " + str(len(res.taxon_names)))
     filename = "taxon-names.json"
     with open(filename, 'w') as f:
         json.dump(list(res.taxon_names), f)
