@@ -38,6 +38,7 @@ def make_queries():
             query = "host[Attribute Name] AND ("
             first = True
         name = re.sub('[():,./\/]', '', name)
+        name = re.sub('\s', '+', name)
         if first:
             query += "(" + name + " NOT " + name + "[Organism])"
             first = False
