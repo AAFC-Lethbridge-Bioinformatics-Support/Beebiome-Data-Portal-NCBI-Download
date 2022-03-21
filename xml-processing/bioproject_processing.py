@@ -101,6 +101,6 @@ def bioproject_XML_to_dicts(filepath):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--filepath", help="path to bioproject xml folder")
+    parser.add_argument("filepath", help="path to bioproject xml folder")
     args = parser.parse_args()
     bioproject_XML_to_dicts(args.filepath)
