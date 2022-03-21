@@ -3,19 +3,20 @@ from typing import OrderedDict
 import json
 import xmltodict
 import xml.etree.ElementTree as ET
+import argparse
 
-
-filepath = "./downloaded-XMLs/run-2022-03-16_15:40:08/biosample/"
-
-def main():
+def biosample_XML_to_dicts(filepath):
     recordlist = []
-
-    for filename in os.listdir(filepath):
+    count = 0
+    files = os.listdir(filepath)
+    for i, filename in enumerate(files):
         if filename.endswith(".xml"):
+
             with open(os.path.join(filepath, filename), "rb") as openfile:
-                print("Processing file: " + filename)
+                print("Processing file " + str(i) + "/" + str(len(files)) + ": " + filename)
                 tree = ET.parse(openfile)
                 for record in tree.findall(".//BioSample"):
+                    count += 1
                     cleanrecord = {}
                     parsed = (xmltodict.parse(ET.tostring(record)))['BioSample']
 
@@ -32,8 +33,7 @@ def main():
 
                     comment = (record.find('Description')).find('Comment')
                     if comment is not None:
-                        # cleanrecord['Comment'] = comment
-                        cleanrecord['Comment'] = str(ET.tostring((comment))) # temp
+                        cleanrecord['Comment'] = str(ET.tostring((comment)))
                     else:
                         cleanrecord['Comment'] = None
 
@@ -41,7 +41,11 @@ def main():
                     cleanrecord['Attributes'] =  str(ET.tostring((attributes)))
 
                     owner = parsed.get('Owner', {})
-                    cleanrecord['Owner'] = owner.get("Name")
+                    name = owner.get("Name")
+                    if (isinstance(name, OrderedDict)):
+                        cleanrecord['Owner'] = name.get('#text')
+                    else:
+                        cleanrecord['Owner'] = name
 
                     contact = (owner.get("Contacts", {})).get("Contact")
                     if contact is not None:
@@ -55,9 +59,10 @@ def main():
 
                     ids = parsed['Ids']['Id']
                     for id in ids:
+                        cleanrecord['SampleName'] = None
+                        cleanrecord['SRA'] = None
                         if (not isinstance(id, OrderedDict)):
-                            cleanrecord['SampleName'] = None
-                            cleanrecord['SRA'] = None
+                            break
                         else:
                             if id.get("@db_label") == 'Sample name':
                                 cleanrecord['SampleName'] = id['#text']
@@ -66,10 +71,14 @@ def main():
 
                     recordlist.append(cleanrecord)
 
-    with open('biosample-records.json', 'w') as f: # temp
+    print("# total record processed :", count)
+    with open('./dumps/biosample-records.json', 'w') as f: # temp
         json.dump(recordlist, f, indent=4)
 
     return recordlist
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filepath", help="path to biosample xml folder")
+    args = parser.parse_args()
+    biosample_XML_to_dicts(args.filepath)
