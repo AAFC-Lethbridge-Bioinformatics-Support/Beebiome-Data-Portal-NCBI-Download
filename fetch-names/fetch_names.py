@@ -34,8 +34,9 @@ def main():
 
     logger.info("Count of names found: " + str(len(res.taxon_names)))
     filename = "taxon-names.json"
+    taxon_names = list(res.taxon_names)
     with open(filename, 'w') as f:
-        json.dump(list(res.taxon_names), f)
+        json.dump(taxon_names, f)
     return
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import xml.etree.ElementTree
 import entrezpy.base.analyzer
 from xml_result import XMLResult
 import os
+from datetime import datetime
 
 
 # implement the virtual class
@@ -59,10 +60,10 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         self.init_result(response, request)
 
         output = response.getvalue()
-        filename = f'./downloaded-XMLs/run-{self.run_timestamp}/{self.db}/{self.db}-{self.query_num}-result.xml'
+        filename = f'./downloaded-XMLs/run-{self.run_timestamp}/{self.db}/{self.db}-{self.query_num}-{datetime.now()}-.xml'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.logger.info(f'Writing {self.db}-query-{self.query_num}-result.xml')
+        self.logger.info(f'Writing {self.db}-query-{self.query_num}-{datetime.now()}-.xml')
         with open(filename, "w") as f:
             f.write(output)
         self.result.push_names(filename)
-        self.logger.debug(f'Finished writing {self.db}-query-{self.query_num}-result.xml')
+        self.logger.debug(f'Finished writing {self.db}-query-{datetime.now()}-.xml')
