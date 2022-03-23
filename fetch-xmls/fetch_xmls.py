@@ -61,6 +61,7 @@ def main():
             pipeline = ncbi.new_pipeline()
             biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
             pipeline.add_fetch({'retmode':'xml'}, dependency=biosample_result,  analyzer=ExportXML("biosample", index, runtime_timestamp))
+            biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
             sra_result = pipeline.add_link({'db' : "sra", 'cmd':'neighbor'}, dependency=biosample_result)
             pipeline.add_fetch({'retmode':'xml'}, dependency=sra_result,  analyzer=ExportXML("sra", index, runtime_timestamp))
             biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})

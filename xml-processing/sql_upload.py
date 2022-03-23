@@ -39,22 +39,40 @@ def insert_bioprojects(filepath, cur):
     bioprojectfolder = f'{filepath}bioproject/'
     bioprojectrecords, publicationrecords = bioproject_XML_to_dicts(bioprojectfolder)
 
-    values = []
+    bioprojects = []
     for record in bioprojectrecords:
-        values.append((
+        bioprojects.append((
             record['BioprojectAccession'],
-            record['PublicationDate'],
-            record['SubmissionDate'],
-            record['UpdateDate'],
+            record['ArchiveID'],
+            record['Archive'],
             record['Title'],
+            record['Description'],
+            record['Relevance'],
             record['Organization'],
             record['DataTypeSet'],
+        ))
+    stmt = "INSERT INTO bioproject (BioprojectAccession, ArchiveID, Archive, Title, Description, Relevance, Organization, DataTypeSet) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    print("Executing insert bioproject statements...")
+    cur.executemany(stmt, bioprojects)
+
+    publications = []
+    for record in publicationrecords:
+        publications.append((
+            record['PublicationDate'],
+            record['Bioproject'],
             record['DOI'],
+            record['Title'],
+            record['Journal'],
+            record['Authors'],
         ))
 
-    stmt = "INSERT INTO bioproject (BioprojectAccession, PublicationDate, SubmissionDate, UpdateDate, Title, Organization, DataTypeSet, DOI) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-    print("Executing insert bioproject statements...")
-    cur.executemany(stmt, values)
+    for record in publications:
+        # ?
+        stmt = "INSERT INTO publication (PublicationDate, BioProjectID, DOI, Title, Journal, Authors) VALUES (%s, (SELECT ID FROM bioproject WHERE ), %s, %s, %s, %s)"
+        print("Executing insert publication statement...")
+        cur.executemany(stmt, record)
+
+
 
 def main():
 
@@ -66,7 +84,7 @@ def main():
     )
     cur = conn.cursor()
 
-    filepath = "./downloaded-XMLs/run-2022-03-17_14:12:28/"
+    filepath = "./downloaded-XMLs/run-2022-03-22_14:10:06/"
     # insert_biosamples(filepath, cur)
     insert_bioprojects(filepath, cur)
 

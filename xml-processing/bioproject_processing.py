@@ -6,7 +6,6 @@ import xml.etree.ElementTree as ET
 import argparse
 
 def bioproject_XML_to_dicts(filepath):
-    filepath = "./downloaded-XMLs/run-2022-03-17_14:12:28/bioproject/"
     recordlist = []
     publicationlist = []
     uniquepublications = set()
