@@ -1,7 +1,7 @@
 import json
 import xml.etree.ElementTree
 import entrezpy.base.analyzer
-from xml_result import XMLResult
+from .xml_result import XMLResult
 import os
 from datetime import datetime
 
@@ -9,11 +9,11 @@ from datetime import datetime
 # implement the virtual class
 class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
 
-    def __init__(self, db, num, timestamp):
+    def __init__(self, dbname="", query_num=0, filepath="."):
         super().__init__()
-        self.db = db
-        self.query_num = num
-        self.run_timestamp = timestamp
+        self.db = dbname
+        self.query_num = query_num
+        self.filepath = filepath
 
     def init_result(self, response, request):
         if self.result is None:
@@ -60,7 +60,8 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         self.init_result(response, request)
 
         output = response.getvalue()
-        filename = f'./downloaded-XMLs/run-{self.run_timestamp}/{self.db}/{self.db}-{self.query_num}-{datetime.now()}-.xml'
+        # datetime.now necessary due to querys sometimes being multiple requests
+        filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{datetime.now()}-.xml'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         self.logger.info(f'Writing {self.db}-query-{self.query_num}-{datetime.now()}-.xml')
         with open(filename, "w") as f:

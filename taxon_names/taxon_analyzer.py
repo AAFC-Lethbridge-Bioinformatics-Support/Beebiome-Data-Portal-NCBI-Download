@@ -1,5 +1,5 @@
 import json
-from taxon_result import TaxonResult
+from .taxon_result import TaxonResult
 import entrezpy.base.analyzer
 import xml.etree.ElementTree
 

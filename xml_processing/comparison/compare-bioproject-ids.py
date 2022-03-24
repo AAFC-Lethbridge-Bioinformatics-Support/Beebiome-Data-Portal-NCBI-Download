@@ -3,7 +3,7 @@ import json
 import xmltodict
 import xml.etree.ElementTree as ET
 
-filepath = "./downloaded-XMLs/run-2022-03-22_14:10:06/bioproject/"
+filepath = "downloaded-XMLs/run-2022-03-23_14:56:44/bioproject"
 recordlist = []
 count = 0
 files = os.listdir(filepath)
