@@ -96,6 +96,18 @@ def bioproject_XML_to_dicts(filepath):
     with open('./dumps/publication-records.json', 'w') as f: # temp
         json.dump(publicationlist, f, indent=4)
 
+
+    # remove dupe records
+    recordlist = {json.dumps(d, sort_keys=True) for d in recordlist}
+    recordlist = [json.loads(t) for t in recordlist]
+
+    publicationlist = {json.dumps(d, sort_keys=True) for d in publicationlist}
+    publicationlist = [json.loads(t) for t in publicationlist]
+
+    print("# total unique bioproject records processed :", len(recordlist))
+    print("# total unique publication records processed :", len(publicationlist))
+
+
     return recordlist, publicationlist
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import os
-from typing import OrderedDict
+from typing import List, OrderedDict
 import json
 import xmltodict
 import xml.etree.ElementTree as ET
@@ -49,6 +49,8 @@ def biosample_XML_to_dicts(filepath):
 
                     contact = (owner.get("Contacts", {})).get("Contact")
                     if contact is not None:
+                        if (isinstance(contact, List)):
+                            contact = contact[0]
                         name = contact.get("Name", {})
                         lastname = name.get("Last")
                         cleanrecord['ContactName'] = name.get("First")
@@ -71,7 +73,12 @@ def biosample_XML_to_dicts(filepath):
 
                     recordlist.append(cleanrecord)
 
+
+    # remove dupe records
+    recordlist = {json.dumps(d, sort_keys=True) for d in recordlist}
+    recordlist = [json.loads(t) for t in recordlist]
     print("# total record processed :", count)
+    print("# total unique records processed :", len(recordlist))
     with open('./dumps/biosample-records.json', 'w') as f: # temp
         json.dump(recordlist, f, indent=4)
 
