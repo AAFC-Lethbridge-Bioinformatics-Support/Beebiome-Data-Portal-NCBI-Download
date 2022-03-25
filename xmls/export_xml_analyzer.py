@@ -34,9 +34,9 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         except Exception as e:
             template = "An exception of type {0} occurred. Arguments: {1!r}"
             dump = json.dumps({'func':__name__,'request' : request.dump(), 'response' : '', 'exception': template.format(type(e).__name__, e.args)}, indent=4)
-            with open(f'query-{self.query_num}-error-{self.run_timestamp}-run.json', "w") as f:
+            with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
                     f.write(dump)
-            self.logger.error(f'Error parsing raw response; see query-{self.query_num}-error-{self.run_timestamp}-run.json')
+            self.logger.error(f'Error parsing raw response; see json dump in {self.db} folder')
             quit()
 
     # overwrite existing class method for less strict error checking
@@ -50,9 +50,9 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
     def analyze_error(self, response, request):
         dump = json.dumps({'func':__name__,'request' : request.dump(),
                                     'response' : response.getvalue()}, indent=4)
-        with open(f'query-{self.query_num}-error-{self.run_timestamp}-run.json', "w") as f:
+        with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
             f.write(dump)
-        self.logger.error(f'Error converting to xml; query-{self.query_num}-error-{self.run_timestamp}-run.json')
+        self.logger.error(f'Error converting to xml; see json dump in {self.db} folder')
         quit()
 
 
@@ -60,11 +60,11 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         self.init_result(response, request)
 
         output = response.getvalue()
-        # datetime.now necessary due to querys sometimes being multiple requests
-        filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{datetime.now()}-.xml'
+        # datetime.now necessary due to biosample querys sometimes being multiple requests
+        filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{datetime.now()}.xml'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.logger.info(f'Writing {self.db}-query-{self.query_num}-{datetime.now()}-.xml')
+        self.logger.info(f'Writing {self.db}-query-{self.query_num}-{datetime.now()}.xml')
         with open(filename, "w") as f:
             f.write(output)
         self.result.push_names(filename)
-        self.logger.debug(f'Finished writing {self.db}-query-{datetime.now()}-.xml')
+        self.logger.debug(f'Finished writing {self.db}-query-{datetime.now()}.xml')
