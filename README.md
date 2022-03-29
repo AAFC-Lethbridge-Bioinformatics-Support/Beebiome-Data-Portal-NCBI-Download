@@ -13,7 +13,7 @@ Downloads Apoidea-related xmls from NCBI using [entrezpy](https://entrezpy.readt
 ## TODO
 - ~~have it run from one python script~~
 - download Nucleotide ids (perl script has this functionality)
-- test multi-threading in entrezpy library
+- test multi-threading in entrezpy library (takes a while currently)
 - actual logging for xml processing scripts
 - log to file
 - resolve gap in bioproject xmls between the  perl script

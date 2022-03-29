@@ -40,7 +40,7 @@ def make_queries(filepath):
     return queries
 
 
-# doing it all in one conduit resulted in too many uids for one link operation (missing records) so chunk it
+# workaround, doing it all in one conduit resulted in too many uids for one link operation (missing records) so chunk it
 def download_related(config, db, query, query_num):
     e = entrezpy.esearch.esearcher.Esearcher("esearch",
                                             config["email"],
@@ -52,10 +52,8 @@ def download_related(config, db, query, query_num):
                         'term' : query,
                         'rettype' : 'uilist'})
     searchresult = list(set(analyzer.result.uids))
-    if db == "sra":
-        size = 500
-    else:
-        size = 100
+    # ncbi servers error out when using bigger numbers?
+    size = 1000
     if len(searchresult) >= size:
         chunked = list(divide_chunks(searchresult, size))
     else:
@@ -74,10 +72,7 @@ def download_related(config, db, query, query_num):
 
 # 514245 uid (probably more) causes Read timeout error by making response too big to read
 #  -> fixed by increasing default timeout in entrezpy Requester file
-def download_xmls(email=None, api_key=None, folder="."):
-    downloadBioproject = True
-    downloadSRA = True
-
+def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = True, downloadSRA = True, downloadBioSample = True):
     config = {
         "email": email,
         "api_key": api_key,
@@ -93,10 +88,11 @@ def download_xmls(email=None, api_key=None, folder="."):
         index += 1
         logger.info(f'Running Query {index} for Biosamples of {totalqueries}')
         try:
-            pipeline = ncbi.new_pipeline()
-            biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
-            pipeline.add_fetch({'retmode':'xml'}, dependency=biosample_result,  analyzer=ExportXML(dbname="biosample", query_num=index, filepath=folder))
-            ncbi.run(pipeline)
+            if downloadBioSample:
+                pipeline = ncbi.new_pipeline()
+                biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
+                pipeline.add_fetch({'retmode':'xml'}, dependency=biosample_result,  analyzer=ExportXML(dbname="biosample", query_num=index, filepath=folder))
+                ncbi.run(pipeline)
 
             if downloadSRA:
                 download_related(config, "sra", query, index)
@@ -108,7 +104,7 @@ def download_xmls(email=None, api_key=None, folder="."):
             dump = json.dumps({'exception': template.format(type(e).__name__, e.args)}, indent=4)
             with open(f'{folder}/query-{index}-error-dump.json', "w") as f:
                     f.write(dump)
-            logger.error(f'Error in query {index} for Biosamples - uncaught exception: {e}, ignoring & continuing...')
+            logger.error(f'Error in runnning query {index} - uncaught exception: {e}, ignoring & continuing...')
             badqueries.append(index)
             continue
 

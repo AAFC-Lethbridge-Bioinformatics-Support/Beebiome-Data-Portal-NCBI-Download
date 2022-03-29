@@ -17,6 +17,7 @@ logging.basicConfig(level=LOGGING_LEVEL, format='%(asctime)s [%(levelname)-8s] %
 logger = logging.getLogger(__name__)
 
 def main(taxon=None, path=None):
+
     if (API_KEY is None):
         logger.error("No API key provided in .env or enviroment variable")
         exit()
