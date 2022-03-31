@@ -61,10 +61,11 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
 
         output = response.getvalue()
         # datetime.now necessary due to biosample querys sometimes being multiple requests
-        filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{datetime.now()}.xml'
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{timestamp}.xml'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.logger.info(f'Writing {self.db}-query-{self.query_num}-{datetime.now()}.xml')
-        with open(filename, "w") as f:
+        self.logger.info(f'Writing {self.db}-query-{self.query_num}-{timestamp}.xml')
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(output)
         self.result.push_names(filename)
-        self.logger.debug(f'Finished writing {self.db}-query-{datetime.now()}.xml')
+        self.logger.debug(f'Finished writing {self.db}-query-{timestamp}.xml')

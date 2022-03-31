@@ -24,7 +24,7 @@ def main(taxon=None, path=None):
     elif (CONTACT_EMAIL is None):
         logger.warning("No dev contact email provided in .env or enviroment variable")
 
-    runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
     if taxon is None:
