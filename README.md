@@ -4,9 +4,10 @@ Downloads Apoidea-related xmls from NCBI using [entrezpy](https://entrezpy.readt
 
 ## 🧰 Usage
 
-1.  Run pip install -r requirements.txt
-2.  Set enviroment variables found in .env.example, or rename to .env with a NCBI API key filled in
-3.  Execute main.py
+1.  Use git clone --recursive on this repository to get the whole project.
+2.  Run pip install -r requirements.txt to get the dependencies.
+3.  Make a copy of .env.example called .env with a NCBI API key (and any other relevant variables) filled in.
+4.  Execute main.py using Python 3.6 or later.
 
 ## 🐛 Known quirks
 * Download is slow
