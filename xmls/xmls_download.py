@@ -1,6 +1,5 @@
-from operator import truediv
+import traceback
 from .export_xml_analyzer import ExportXML
-from datetime import datetime
 import entrezpy.conduit
 import entrezpy.log.logger
 import json
@@ -40,7 +39,7 @@ def make_queries(filepath):
     return queries
 
 
-# workaround, doing it all in one conduit resulted in too many uids for one link operation (missing records) so chunk it
+# workaround, doing it all in one conduit using entrezpy resulted in too many uids for one link operation (missing records) so chunk it
 def download_related(config, db, query, query_num):
     e = entrezpy.esearch.esearcher.Esearcher("esearch",
                                             config["email"],
@@ -52,8 +51,8 @@ def download_related(config, db, query, query_num):
                         'term' : query,
                         'rettype' : 'uilist'})
     searchresult = list(set(analyzer.result.uids))
-    # ncbi servers error out when using bigger numbers?
-    size = 1000
+    # if number too big, internal server error code 500 from ncbi??? very helpful error
+    size = 100
     if len(searchresult) >= size:
         chunked = list(divide_chunks(searchresult, size))
     else:
@@ -81,12 +80,11 @@ def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = Tr
     ncbi = entrezpy.conduit.Conduit(email, apikey=api_key)
     queries = make_queries(folder)
 
-    badqueries = []
     totalqueries = len(queries)
 
     for index, query in enumerate(queries):
         index += 1
-        logger.info(f'Running Query {index} for Biosamples of {totalqueries}')
+        logger.info(f'Running query {index} out of {totalqueries}')
         try:
             if downloadBioSample:
                 pipeline = ncbi.new_pipeline()
@@ -100,18 +98,13 @@ def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = Tr
                 download_related(config, "bioproject", query, index)
 
         except Exception as e:
-            template = "An uncaught exception of type {0} occurred. Arguments: {1!r}"
-            dump = json.dumps({'exception': template.format(type(e).__name__, e.args)}, indent=4)
             with open(f'{folder}/query-{index}-error-dump.json', "w") as f:
-                    f.write(dump)
-            logger.error(f'Error in runnning query {index} - uncaught exception: {e}, ignoring & continuing...')
-            badqueries.append(index)
-            continue
+                f.write(json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}), indent=4)
+            logger.error(f'Uncaught exception when running query {index}; see json dump in {folder} folder.')
+            pass
 
-    if (len(badqueries) >= 1):
-        logger.error("The following queries (IDs) failed: " + str(badqueries))
-    else:
-        logger.info("All queries ran successfully")
+
+    logger.info(f'Finished running {totalqueries} queries. Check folders for any errors.')
 
     return
 

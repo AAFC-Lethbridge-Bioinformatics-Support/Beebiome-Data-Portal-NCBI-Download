@@ -1,6 +1,7 @@
 import json
 import xml.etree.ElementTree
 import entrezpy.base.analyzer
+import traceback
 from .xml_result import XMLResult
 import os
 from datetime import datetime
@@ -32,12 +33,11 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
             else:
                 self.analyze_result(response, request)
         except Exception as e:
-            template = "An exception of type {0} occurred. Arguments: {1!r}"
-            dump = json.dumps({'func':__name__,'request' : request.dump(), 'response' : '', 'exception': template.format(type(e).__name__, e.args)}, indent=4)
-            with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
-                    f.write(dump)
-            self.logger.error(f'Error parsing raw response; see json dump in {self.db} folder')
-            quit()
+            with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.log', "w") as f:
+                    f.write(json.dumps({'func':__name__,'request' : request.dump(), 'exception': str(e), 'traceback': traceback.format_exc()}, indent=4))
+            self.logger.error(f'Uncaught exception when processing response in query {self.query_num} for {self.db}; see json dump in {self.db} folder.')
+            pass
+
 
     # overwrite existing class method for less strict error checking
     def check_error_xml(self, response):
@@ -53,14 +53,13 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
             f.write(dump)
         self.logger.error(f'Error converting to xml; see json dump in {self.db} folder')
-        quit()
 
 
     def analyze_result(self, response, request):
         self.init_result(response, request)
 
         output = response.getvalue()
-        # datetime.now necessary due to biosample querys sometimes being multiple requests
+        # timestamp necessary due to querys sometimes being multiple requests
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{timestamp}.xml'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
