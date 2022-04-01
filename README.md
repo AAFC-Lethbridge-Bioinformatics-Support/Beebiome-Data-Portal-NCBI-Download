@@ -1,16 +1,16 @@
-# NCBI-Download
+# 📚 NCBI-Download
 
 Downloads Apoidea-related xmls from NCBI using [entrezpy](https://entrezpy.readthedocs.io) for Beebiome data portal.
 
-## Usage
+## 🧰 Usage
 
-1.  Run pip install -r requirements.txt
-2.  Set enviroment variables found in .env.example, or rename to .env with a NCBI API key filled in
-3.  Be sure to execute Python scripts from the NCBI-Download subdirectory, not the subdirectories itself.
-4.  Run fetch-names.py to get the taxon-names.json with all Apoidea names first
-5.  Run fetch-xml.py to get the xmls. (~ 2 hours in my case)
+1.  Use git clone --recursive on this repository to get the whole project.
+2.  Run pip install -r requirements.txt to get the dependencies.
+3.  Make a copy of .env.example called .env with a NCBI API key (and any other relevant variables) filled in.
+4.  Execute main.py using Python 3.6 or later.
 
-## TO-DO
-- have it run from one python script
-- download Nucleotide ids (perl script has this functionality)
-- test multi-threading in entrezpy library
+## 🐛 Known quirks
+* Download is slow
+* XMLs files may contain duplicate records
+* NCBI servers may decide to timeout requests randomly
+* Buggy behaviour on Windows observed; recommend to run on Linux machine

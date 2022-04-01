@@ -1,14 +1,12 @@
 # do not save data downloaded to github
-
-downloaded-XMLs
-taxon-names.json
 *.json
+*.xml
+NCBI-xmls-downloads
 
 # dev
-oldperlscript
+dev
 .vscode
-
-
+dumps
 
 # copypasted from https://github.com/github/gitignore/blob/main/Python.gitignore
 # Byte-compiled / optimized / DLL files

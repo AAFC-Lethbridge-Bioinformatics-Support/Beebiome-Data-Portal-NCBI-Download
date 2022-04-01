@@ -1,18 +1,20 @@
 import json
 import xml.etree.ElementTree
 import entrezpy.base.analyzer
-from xml_result import XMLResult
+import traceback
+from .xml_result import XMLResult
 import os
+from datetime import datetime
 
 
 # implement the virtual class
 class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
 
-    def __init__(self, db, num, timestamp):
+    def __init__(self, dbname="", query_num=0, filepath="."):
         super().__init__()
-        self.db = db
-        self.query_num = num
-        self.run_timestamp = timestamp
+        self.db = dbname
+        self.query_num = query_num
+        self.filepath = filepath
 
     def init_result(self, response, request):
         if self.result is None:
@@ -31,12 +33,11 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
             else:
                 self.analyze_result(response, request)
         except Exception as e:
-            template = "An exception of type {0} occurred. Arguments: {1!r}"
-            dump = json.dumps({'func':__name__,'request' : request.dump(), 'response' : '', 'exception': template.format(type(e).__name__, e.args)}, indent=4)
-            with open(f'query-{self.query_num}-error-{self.run_timestamp}-run.json', "w") as f:
-                    f.write(dump)
-            self.logger.error(f'Error parsing raw response; see query-{self.query_num}-error-{self.run_timestamp}-run.json')
-            quit()
+            with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.log', "w") as f:
+                    f.write(json.dumps({'func':__name__,'request' : request.dump(), 'exception': str(e), 'traceback': traceback.format_exc()}, indent=4))
+            self.logger.error(f'Uncaught exception when processing response in query {self.query_num} for {self.db}; see json dump in {self.db} folder.')
+            pass
+
 
     # overwrite existing class method for less strict error checking
     def check_error_xml(self, response):
@@ -49,20 +50,21 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
     def analyze_error(self, response, request):
         dump = json.dumps({'func':__name__,'request' : request.dump(),
                                     'response' : response.getvalue()}, indent=4)
-        with open(f'query-{self.query_num}-error-{self.run_timestamp}-run.json', "w") as f:
+        with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
             f.write(dump)
-        self.logger.error(f'Error converting to xml; query-{self.query_num}-error-{self.run_timestamp}-run.json')
-        quit()
+        self.logger.error(f'Error converting to xml; see json dump in {self.db} folder')
 
 
     def analyze_result(self, response, request):
         self.init_result(response, request)
 
         output = response.getvalue()
-        filename = f'./downloaded-XMLs/run-{self.run_timestamp}/{self.db}/{self.db}-{self.query_num}-result.xml'
+        # timestamp necessary due to querys sometimes being multiple requests
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f'{self.filepath}/{self.db}/{self.db}-{self.query_num}-{timestamp}.xml'
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        self.logger.info(f'Writing {self.db}-query-{self.query_num}-result.xml')
-        with open(filename, "w") as f:
+        self.logger.info(f'Writing {self.db}-query-{self.query_num}-{timestamp}.xml')
+        with open(filename, "w", encoding="utf-8") as f:
             f.write(output)
         self.result.push_names(filename)
-        self.logger.debug(f'Finished writing {self.db}-query-{self.query_num}-result.xml')
+        self.logger.debug(f'Finished writing {self.db}-query-{timestamp}.xml')
