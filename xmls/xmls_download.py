@@ -60,6 +60,7 @@ def download_related(config, db, query, query_num):
 
     totalchunks = len(chunked)
     for index, chunk in enumerate(chunked):
+        try:
         index += 1
         logger.info(f'Running {db} subquery {index} of {totalchunks} for query {query_num}')
         pipeline = ncbi.new_pipeline()
@@ -67,6 +68,12 @@ def download_related(config, db, query, query_num):
         filenamenum = (str(query_num) + "-" + str(index))
         pipeline.add_fetch({'retmode':'xml'}, dependency=link_results,  analyzer=ExportXML(dbname=db, query_num=filenamenum, filepath=config["folder"]))
         ncbi.run(pipeline)
+        except Exception as e:
+            dump = json.dumps({'func':__name__, 'query': query, 'uids': str(chunk),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
+            with open(f'{config["folder"]}/query-{index}-{db}-error-dump.json', "w") as f:
+                    f.write(dump)
+            logger.error(f'Uncaught exception when running {db} subquery {index} for {query_num}; see json dump in {config["folder"]} folder.')
+            pass
 
 
 # 514245 uid (probably more) causes Read timeout error by making response too big to read
@@ -98,8 +105,9 @@ def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = Tr
                 download_related(config, "bioproject", query, index)
 
         except Exception as e:
+            dump = json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
             with open(f'{folder}/query-{index}-error-dump.json', "w") as f:
-                f.write(json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}), indent=4)
+                f.write(dump)
             logger.error(f'Uncaught exception when running query {index}; see json dump in {folder} folder.')
             pass
 
