@@ -70,7 +70,7 @@ def download_related(config, db, query, query_num):
         ncbi.run(pipeline)
         except Exception as e:
             dump = json.dumps({'func':__name__, 'query': query, 'uids': str(chunk),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
-            with open(f'{config["folder"]}/query-{index}-{db}-error-dump.json', "w") as f:
+            with open(f'{config["folder"]}/query-{filenamenum}-{db}-error-dump.json', "w") as f:
                     f.write(dump)
             logger.error(f'Uncaught exception when running {db} subquery {index} for {query_num}; see json dump in {config["folder"]} folder.')
             pass
