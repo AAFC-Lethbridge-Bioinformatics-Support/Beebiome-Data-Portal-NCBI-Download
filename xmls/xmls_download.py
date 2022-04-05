@@ -91,24 +91,18 @@ def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = Tr
     for index, query in enumerate(queries):
         index += 1
         logger.info(f'Running query {index} out of {totalqueries}')
-        try:
-            if downloadBioSample:
-                pipeline = ncbi.new_pipeline()
-                biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
-                pipeline.add_fetch({'retmode':'xml'}, dependency=biosample_result,  analyzer=ExportXML(dbname="biosample", query_num=index, filepath=folder))
-                ncbi.run(pipeline)
+        if downloadBioSample:
+            pipeline = ncbi.new_pipeline()
+            biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
+            pipeline.add_fetch({'retmode':'xml'}, dependency=biosample_result,  analyzer=ExportXML(dbname="biosample", query_num=index, filepath=folder))
+            ncbi.run(pipeline)
 
-            if downloadSRA:
-                download_related(config, "sra", query, index)
-            if downloadBioproject:
-                download_related(config, "bioproject", query, index)
+        if downloadSRA:
+            download_related(config, "sra", query, index)
+        if downloadBioproject:
+            download_related(config, "bioproject", query, index)
 
-        except Exception as e:
-            dump = json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
-            with open(f'{folder}/query-{index}-error-dump.json', "w") as f:
-                f.write(dump)
-            logger.error(f'Uncaught exception when running query {index}; see json dump in {folder} folder.')
-            pass
+
 
 
     logger.info(f'Finished running {totalqueries} queries. Check folders for any errors.')
