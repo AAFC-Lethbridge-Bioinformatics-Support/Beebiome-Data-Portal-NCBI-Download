@@ -33,9 +33,9 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
             else:
                 self.analyze_result(response, request)
         except Exception as e:
-            with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.log', "w") as f:
+            with open(f'{self.filepath}/{self.db}-query-{self.query_num}-error.log', "w") as f:
                     f.write(json.dumps({'func':__name__,'request' : request.dump(), 'exception': str(e), 'traceback': traceback.format_exc()}, indent=4))
-            self.logger.error(f'Uncaught exception when processing response in query {self.query_num} for {self.db}; see json dump in {self.db} folder.')
+            self.logger.error(f'Uncaught exception when processing response in query {self.query_num} for {self.db}')
             pass
 
 
@@ -50,10 +50,9 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
     def analyze_error(self, response, request):
         dump = json.dumps({'func':__name__,'request' : request.dump(), 'exception': "Response may not be properly formatted XML", 'traceback': "None",
                                     'response' : response.getvalue()}, indent=4)
-        with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
+        with open(f'{self.filepath}/{self.db}-query-{self.query_num}-error.log', "w") as f:
             f.write(dump)
-        self.logger.error(f'Error converting to xml; see json dump in {self.db} folder')
-
+        self.logger.error(f'Failed converting response to xml in query {self.query_num} for {self.db}')
 
     def analyze_result(self, response, request):
         self.init_result(response, request)
