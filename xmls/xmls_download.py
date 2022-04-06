@@ -67,6 +67,9 @@ def download_related(config, db, query, query_num):
             filenamenum = (str(query_num) + "-" + str(index))
             pipeline.add_fetch({'retmode':'xml'}, dependency=link_results,  analyzer=ExportXML(dbname=db, query_num=filenamenum, filepath=config["folder"]))
             ncbi.run(pipeline)
+        except RuntimeError as e:
+            logger.error(f'Unsucessful {db} subquery {index} of {totalchunks} for query {query_num}')
+            pass
         except Exception as e:
             dump = json.dumps({'func':__name__, 'query': query, 'uids': str(chunk),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
             with open(f'{config["folder"]}/query-{filenamenum}-{db}-error-dump.json', "w") as f:

@@ -48,7 +48,7 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         return False
 
     def analyze_error(self, response, request):
-        dump = json.dumps({'func':__name__,'request' : request.dump(),
+        dump = json.dumps({'func':__name__,'request' : request.dump(), 'exception': "Response may not be properly formatted XML", 'traceback': "None",
                                     'response' : response.getvalue()}, indent=4)
         with open(f'{self.filepath}/{self.db}/{self.db}-query-{self.query_num}-error.json', "w") as f:
             f.write(dump)
