@@ -41,21 +41,27 @@ def make_queries(filepath):
 
 # workaround, doing it all in one conduit using entrezpy resulted in too many uids for one link operation (missing records) so chunk it
 def download_related(config, db, query, query_num):
-    e = entrezpy.esearch.esearcher.Esearcher("esearch",
-                                            config["email"],
-                                            apikey=config["api_key"],
-                                            )
     ncbi = entrezpy.conduit.Conduit(config["email"], config["api_key"])
-    analyzer = e.inquire({'db' : 'biosample',
-                        'term' : query,
-                        'rettype' : 'uilist'})
-    searchresult = list(set(analyzer.result.uids))
+    try:
+        pipeline = ncbi.new_pipeline()
+        pipeline.add_search({'db' : 'biosample',
+                            'term' : query,
+                            'rettype' : 'uilist'})
+        analzyer = ncbi.run(pipeline)
+        uids = analzyer.result.uids
+    except Exception as e:    
+        dump = json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
+        with open(f'{config["folder"]}/query-{query_num}-{db}-error-dump.json', "w") as f:
+            f.write(dump)
+        logger.error(f'Uncaught exception when getting UIDs for query {query_num} for {db}; see json dump in {config["folder"]} folder.')
+        return
+
     # if number too big, internal server error code 500 from ncbi
     size = 1000
-    if len(searchresult) >= size:
-        chunked = list(divide_chunks(searchresult, size))
+    if len(uids) >= size:
+        chunked = list(divide_chunks(uids, size))
     else:
-        chunked = [searchresult]
+        chunked = [uids]
 
     totalchunks = len(chunked)
     for index, chunk in enumerate(chunked):
