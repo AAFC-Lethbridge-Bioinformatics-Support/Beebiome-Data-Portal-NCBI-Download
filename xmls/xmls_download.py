@@ -48,16 +48,18 @@ def download_related(config, db, query, query_num):
                             'term' : query,
                             'rettype' : 'uilist'})
         analzyer = ncbi.run(pipeline)
-        uids = analzyer.result.uids
+        uids = sorted(list(set(analzyer.result.uids)))
+
     except Exception as e:    
         dump = json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
-        with open(f'{config["folder"]}/query-{query_num}-{db}-error-dump.json', "w") as f:
+        with open(f'{config["folder"]}/query-{query_num}-{db}-error.log', "w") as f:
             f.write(dump)
-        logger.error(f'Uncaught exception when getting UIDs for query {query_num} for {db}; see json dump in {config["folder"]} folder.')
+        logger.error(f'Exception when getting UIDs for query {query_num} for {db}; see logs in {config["folder"]} folder.')
         return
 
     # if number too big, internal server error code 500 from ncbi
     size = 1000
+
     if len(uids) >= size:
         chunked = list(divide_chunks(uids, size))
     else:
@@ -65,22 +67,23 @@ def download_related(config, db, query, query_num):
 
     totalchunks = len(chunked)
     for index, chunk in enumerate(chunked):
+        filenamenum = (str(query_num) + "-" + str(index))
+        chunked_uids = list(set(chunk))
+        index += 1
+        logger.info(f'Running {db} subquery {index} of {totalchunks} for query {query_num}')
         try:
-            index += 1
-            logger.info(f'Running {db} subquery {index} of {totalchunks} for query {query_num}')
             pipeline = ncbi.new_pipeline()
-            link_results = pipeline.add_link({'dbfrom':'biosample','db' : db, 'cmd':'neighbor', 'id': chunk})
-            filenamenum = (str(query_num) + "-" + str(index))
+            link_results = pipeline.add_link({'dbfrom':'biosample','db' : db, 'cmd':'neighbor', 'id': chunked_uids})
             pipeline.add_fetch({'retmode':'xml'}, dependency=link_results,  analyzer=ExportXML(dbname=db, query_num=filenamenum, filepath=config["folder"]))
             ncbi.run(pipeline)
         except RuntimeError as e:
             logger.error(f'Unsucessful {db} subquery {index} of {totalchunks} for query {query_num}')
             pass
         except Exception as e:
-            dump = json.dumps({'func':__name__, 'query': query, 'uids': str(chunk),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
-            with open(f'{config["folder"]}/query-{filenamenum}-{db}-error-dump.json', "w") as f:
+            dump = json.dumps({'func':__name__, 'uids': str(chunked_uids),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
+            with open(f'{config["folder"]}/query-{filenamenum}-{db}-error.log', "w") as f:
                     f.write(dump)
-            logger.error(f'Uncaught exception when running {db} subquery {index} for {query_num}; see json dump in {config["folder"]} folder.')
+            logger.error(f'z when running {db} subquery {index} for {query_num}; see json dump in {config["folder"]} folder.')
             pass
 
 def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = True, downloadSRA = True, downloadBioSample = True):
@@ -107,9 +110,6 @@ def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = Tr
             download_related(config, "sra", query, index)
         if downloadBioproject:
             download_related(config, "bioproject", query, index)
-
-
-
 
     logger.info(f'Finished running {totalqueries} queries. Check folders for any errors.')
 

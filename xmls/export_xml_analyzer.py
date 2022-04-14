@@ -35,7 +35,7 @@ class ExportXML(entrezpy.base.analyzer.EutilsAnalyzer):
         except Exception as e:
             with open(f'{self.filepath}/{self.db}-query-{self.query_num}-error.log', "w") as f:
                     f.write(json.dumps({'func':__name__,'request' : request.dump(), 'exception': str(e), 'traceback': traceback.format_exc()}, indent=4))
-            self.logger.error(f'Uncaught exception when processing response in query {self.query_num} for {self.db}')
+            self.logger.error(f'Exception when processing response in query {self.query_num} for {self.db}')
             pass
 
 
