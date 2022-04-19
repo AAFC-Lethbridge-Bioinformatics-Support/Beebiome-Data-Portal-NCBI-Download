@@ -42,20 +42,13 @@ def make_queries(filepath):
 # workaround, doing it all in one conduit using entrezpy resulted in too many uids for one link operation (missing records) so chunk it
 def download_related(config, db, query, query_num):
     ncbi = entrezpy.conduit.Conduit(config["email"], config["api_key"])
-    try:
-        pipeline = ncbi.new_pipeline()
-        pipeline.add_search({'db' : 'biosample',
+    pipeline = ncbi.new_pipeline()
+    pipeline.add_search({'db' : 'biosample',
                             'term' : query,
                             'rettype' : 'uilist'})
-        analzyer = ncbi.run(pipeline)
-        uids = sorted(list(set(analzyer.result.uids)))
+    analzyer = ncbi.run(pipeline)
+    uids = sorted(list(set(analzyer.result.uids)))
 
-    except Exception as e:    
-        dump = json.dumps({'func':__name__, 'query': query, 'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
-        with open(f'{config["folder"]}/query-{query_num}-{db}-error.log', "w") as f:
-            f.write(dump)
-        logger.error(f'Exception when getting UIDs for query {query_num} for {db}; see logs in {config["folder"]} folder.')
-        return
 
     # if number too big, internal server error code 500 from ncbi
     size = 1000
@@ -73,7 +66,7 @@ def download_related(config, db, query, query_num):
         logger.info(f'Running {db} subquery {index} of {totalchunks} for query {query_num}')
         try:
             pipeline = ncbi.new_pipeline()
-            link_results = pipeline.add_link({'dbfrom':'biosample','db' : db, 'cmd':'neighbor', 'id': chunked_uids})
+            link_results = pipeline.add_link({'dbfrom':'biosample','db' : db, 'cmd':'neighbor', 'id': chunked_uids, 'link': False})
             pipeline.add_fetch({'retmode':'xml'}, dependency=link_results,  analyzer=ExportXML(dbname=db, query_num=filenamenum, filepath=config["folder"]))
             ncbi.run(pipeline)
         except RuntimeError as e:
@@ -83,7 +76,7 @@ def download_related(config, db, query, query_num):
             dump = json.dumps({'func':__name__, 'uids': str(chunked_uids),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
             with open(f'{config["folder"]}/query-{filenamenum}-{db}-error.log', "w") as f:
                     f.write(dump)
-            logger.error(f'z when running {db} subquery {index} for {query_num}; see json dump in {config["folder"]} folder.')
+            logger.error(f'Exception when running {db} subquery {index} for {query_num}; see logs in {config["folder"]} folder.')
             pass
 
 def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = True, downloadSRA = True, downloadBioSample = True):
