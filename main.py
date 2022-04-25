@@ -1,54 +1,49 @@
 from datetime import datetime
-from taxon_names.get_names import get_names
-from xmls.xmls_download import download_xmls
-from dotenv import load_dotenv
+from names_download.names_download import get_names
+from xmls_download.xmls_download import get_xmls
+import toml
 import entrezpy.log.logger
 import argparse
 import logging
 import os
-load_dotenv()
 
-LOGGING_LEVEL = os.getenv('NCBI_DOWNLOAD_LOGGING_LEVEL')
-API_KEY = os.getenv('NCBI_API_KEY')
-CONTACT_EMAIL = os.getenv('NCBI_API_DEV_CONTACT_EMAIL')
+config = toml.load("config.toml")
 
-entrezpy.log.logger.set_level(LOGGING_LEVEL)
-logging.basicConfig(level=LOGGING_LEVEL, format='%(asctime)s [%(levelname)-8s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+entrezpy.log.logger.set_level(config['logging']['level'])
+logging.basicConfig(level=config['logging']['level'], format="%(asctime)s [%(levelname)-8s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 def main(taxon=None, path=None):
 
-    if (API_KEY is None):
-        logger.error("No API key provided in .env or enviroment variable")
-        exit()
-    elif (CONTACT_EMAIL is None):
-        logger.warning("No dev contact email provided in .env or enviroment variable")
+    if (config["secrets"]["api_key"] is None or config["secrets"]["api_key"] == "your-api-key-here"):
+        exit(logger.error("No API key provided in config"))
+    elif (config["secrets"]["email"] is None or config["secrets"]["email"] == ""):
+        logger.warning("No dev contact email provided in config")
 
-    runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
 
     if taxon is None:
         taxon = "Apoidea"
 
     if path is None:
-        path = f'./NCBI-xmls-downloads/{taxon}-{runtime_timestamp}-download'
+        path = f'./NCBI_xmls_downloads/{taxon}_download_({runtime_timestamp})'
 
     try:
         os.makedirs(path, exist_ok=True)
     except OSError:
-        logger.error("Creation of the directory %s failed" % path)
-    else:
-        logger.info("Successfully created the directory %s" % path)
+        exit(logger.error("Creation of the directory %s failed" % path))
 
-    get_names(email=CONTACT_EMAIL, api_key=API_KEY, folder=path, taxon=taxon)
-    download_xmls(email=CONTACT_EMAIL, api_key=API_KEY, folder=path)
 
-    logging.info("Finished downloading XMLs")
+    get_names(folder=path, taxon=taxon)
+    get_xmls(folder=path)
+
     logging.shutdown()
+    exit(0)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--filepath", type=str, help="Filepath to save xmls")
-    parser.add_argument("--name", type=str, help="Name of taxon to download")
+    parser.add_argument("--filepath", type=str, help="Optional filepath to save the downloaded XMLs to")
+    parser.add_argument("--name", type=str, help="Optional name of taxon to download, default is Apoidea")
     args = parser.parse_args()
     main(taxon=args.name, path=args.filepath)

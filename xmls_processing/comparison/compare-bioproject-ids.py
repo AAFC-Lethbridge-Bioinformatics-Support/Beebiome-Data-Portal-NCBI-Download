@@ -3,7 +3,7 @@ import json
 import xmltodict
 import xml.etree.ElementTree as ET
 
-filepath = "downloaded-XMLs/run-2022-03-23_14:56:44/bioproject"
+filepath = "./NCBI-xmls-downloads/Apoidea-2022-04-15_14-34-45-download/bioproject"
 recordlist = []
 count = 0
 files = os.listdir(filepath)
@@ -31,7 +31,7 @@ for i, filename in enumerate(files):
 print("# total record processed #1:", count)
 
 
-filepath = "./downloaded-XMLs/Apoidea/bioproject/"
+filepath = "./NCBI-xmls-downloads/Apoidea/bioproject/"
 recordlist2 = []
 count2 = 0
 files = os.listdir(filepath)

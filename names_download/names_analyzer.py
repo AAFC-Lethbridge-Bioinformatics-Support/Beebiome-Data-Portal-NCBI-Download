@@ -1,16 +1,16 @@
 import json
-from .taxon_result import TaxonResult
+from .names_result import NamesResult
 import entrezpy.base.analyzer
 import xml.etree.ElementTree
 
 # implement the virtual class
-class TaxonAnalyzer(entrezpy.base.analyzer.EutilsAnalyzer):
+class NamesAnalyzer(entrezpy.base.analyzer.EutilsAnalyzer):
     def __init__(self):
         super().__init__()
 
     def init_result(self, response, request):
         if self.result is None:
-            self.result = TaxonResult(response, request)
+            self.result = NamesResult(response, request)
 
     def analyze_error(self, response, request):
         print(json.dumps({__name__:{'Response': {'dump' : request.dump(),

@@ -1,5 +1,5 @@
 ./entrezpy
 mysql-connector-python==8.0.28
 protobuf==3.19.4
-python-dotenv==0.19.2
+toml==0.10.2
 xmltodict==0.12.0

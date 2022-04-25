@@ -1,14 +1,19 @@
 # https://entrezpy.readthedocs.io/en/master/tutorials/extending/pubmed.html#putting-everything-together
 import entrezpy.conduit
 import entrezpy.log.logger
-from .taxon_analyzer import TaxonAnalyzer
+from .names_analyzer import NamesAnalyzer
 import logging
 import json
+import toml
 
+config = toml.load("./config.toml")
 logger = logging.getLogger(__name__)
 
-def get_names(email=None, api_key=None, folder="", taxon="Apoidea"):
-    ncbi = entrezpy.conduit.Conduit(email, apikey=api_key)
+def get_names(folder="", taxon="Apoidea"):
+    if config['download']['use_threads']:
+        ncbi = entrezpy.conduit.Conduit(config["secrets"]["email"], apikey=config["secrets"]["api_key"], threads=config["download"]["threads"])
+    else:
+        ncbi = entrezpy.conduit.Conduit(config["secrets"]["email"], apikey=config["secrets"]["api_key"])
 
     pipeline = ncbi.new_pipeline()
 
@@ -16,13 +21,14 @@ def get_names(email=None, api_key=None, folder="", taxon="Apoidea"):
                         'term' : f'{taxon}[subtree]',
                         'rettype' : 'uilist'})
 
-    pipeline.add_fetch({'retmode' : 'xml'}, dependency=taxonomy_ids, analyzer=TaxonAnalyzer())
+    pipeline.add_fetch({'retmode' : 'xml'}, dependency=taxonomy_ids, analyzer=NamesAnalyzer())
 
     res = (ncbi.run(pipeline)).get_result()
 
     logger.info("Count of names found: " + str(len(res.taxon_names)))
-    filepath = f'{folder}/taxon-names.json'
     taxon_names = list(res.taxon_names)
+
+    filepath = f'{folder}/taxon-names.json'
     with open(filepath, 'w') as f:
         json.dump(taxon_names, f)
     return filepath

@@ -1,19 +1,35 @@
-import traceback
-from .export_xml_analyzer import ExportXML
+import imp
+from .xmls_analyzer import ExportXML
 import entrezpy.conduit
 import entrezpy.log.logger
 import json
 import re
 import logging
+import toml
 
+config = toml.load("./config.toml")
 logger = logging.getLogger(__name__)
+
+downloadBioSample = config["download"]["biosample"]
+downloadBioproject = config["download"]["bioproject"]
+downloadSRA = config["download"]["sra"]
+use_threads = config["download"]["use_threads"]
+threads = config["download"]["threads"]
 
 def divide_chunks(l, n):
     # looping till length l
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
-# make queries from taxon_name.json
+
+def create_conduit():
+    if (config["download"]["use_threads"]):
+        conduit = entrezpy.conduit.Conduit(config["secrets"]["email"], apikey=config["secrets"]["api_key"], threads=config["download"]["threads"])
+    else:
+        conduit = entrezpy.conduit.Conduit(config["secrets"]["email"], apikey=config["secrets"]["api_key"])
+    return conduit
+
+# Make query strings from taxon_names.json
 def make_queries(filepath):
     with open(f'{filepath}/taxon-names.json', 'r') as f:
         names = json.load(f)
@@ -39,9 +55,11 @@ def make_queries(filepath):
     return queries
 
 
-# workaround, doing it all in one conduit using entrezpy resulted in too many uids for one link operation (missing records) so chunk it
-def download_related(config, db, query, query_num):
-    ncbi = entrezpy.conduit.Conduit(config["email"], config["api_key"])
+
+# Download related data helper function
+# Workaround for error thrown from too much UIDs during link operations
+def download_related(folder, db, query, query_num):
+    ncbi = create_conduit()
     pipeline = ncbi.new_pipeline()
     pipeline.add_search({'db' : 'biosample',
                             'term' : query,
@@ -49,10 +67,7 @@ def download_related(config, db, query, query_num):
     analzyer = ncbi.run(pipeline)
     uids = sorted(list(set(analzyer.result.uids)))
 
-
-    # if number too big, internal server error code 500 from ncbi
     size = 1000
-
     if len(uids) >= size:
         chunked = list(divide_chunks(uids, size))
     else:
@@ -60,39 +75,28 @@ def download_related(config, db, query, query_num):
 
     totalchunks = len(chunked)
     for index, chunk in enumerate(chunked):
+        index += 1
         filenamenum = (str(query_num) + "-" + str(index))
         chunked_uids = list(set(chunk))
-        index += 1
-        logger.info(f'Running {db} subquery {index} of {totalchunks} for query {query_num}')
-        try:
-            pipeline = ncbi.new_pipeline()
-            link_results = pipeline.add_link({'dbfrom':'biosample','db' : db, 'cmd':'neighbor', 'id': chunked_uids, 'link': False})
-            pipeline.add_fetch({'retmode':'xml'}, dependency=link_results,  analyzer=ExportXML(dbname=db, query_num=filenamenum, filepath=config["folder"]))
-            ncbi.run(pipeline)
-        except RuntimeError as e:
-            logger.error(f'Unsucessful {db} subquery {index} of {totalchunks} for query {query_num}')
-            pass
-        except Exception as e:
-            dump = json.dumps({'func':__name__, 'uids': str(chunked_uids),'exeception': str(e), 'traceback': traceback.format_exc()}, indent=4)
-            with open(f'{config["folder"]}/query-{filenamenum}-{db}-error.log', "w") as f:
-                    f.write(dump)
-            logger.error(f'Exception when running {db} subquery {index} for {query_num}; see logs in {config["folder"]} folder.')
-            pass
 
-def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = True, downloadSRA = True, downloadBioSample = True):
-    config = {
-        "email": email,
-        "api_key": api_key,
-        "folder": folder
-    }
-    ncbi = entrezpy.conduit.Conduit(email, apikey=api_key)
+        logger.info(f'Running {db} subquery {index} of {totalchunks} for query {query_num}')
+        pipeline = ncbi.new_pipeline()
+        link_results = pipeline.add_link({'dbfrom':'biosample','db' : db, 'cmd':'neighbor', 'id': chunked_uids, 'link': False})
+        pipeline.add_fetch({'retmode':'xml'}, dependency=link_results,  analyzer=ExportXML(dbname=db, query_num=filenamenum, filepath=folder))
+        ncbi.run(pipeline)
+
+# Main download function
+def get_xmls(folder="."):
+
+    ncbi = create_conduit()
     queries = make_queries(folder)
 
     totalqueries = len(queries)
-    queries.reverse() # fail fast
+
     for index, query in enumerate(queries):
         index += 1
         logger.info(f'Running query {index} out of {totalqueries}')
+
         if downloadBioSample:
             pipeline = ncbi.new_pipeline()
             biosample_result = pipeline.add_search({'db' : 'biosample', 'term' : query, 'rettype' : 'uilist'})
@@ -100,9 +104,9 @@ def download_xmls(email=None, api_key=None, folder=".",  downloadBioproject = Tr
             ncbi.run(pipeline)
 
         if downloadSRA:
-            download_related(config, "sra", query, index)
+            download_related(folder, "sra", query, index)
         if downloadBioproject:
-            download_related(config, "bioproject", query, index)
+            download_related(folder, "bioproject", query, index)
 
     logger.info(f'Finished running {totalqueries} queries. Check folders for any errors.')
 

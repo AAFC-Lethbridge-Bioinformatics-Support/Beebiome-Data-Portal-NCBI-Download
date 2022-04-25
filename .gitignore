@@ -2,6 +2,8 @@
 *.json
 *.xml
 NCBI-xmls-downloads
+NCBI_xmls_downloads
+config.toml
 
 # dev
 dev

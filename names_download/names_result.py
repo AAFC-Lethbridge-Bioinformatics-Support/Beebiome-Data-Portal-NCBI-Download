@@ -1,7 +1,7 @@
 import entrezpy.base.result
 
 # implement the virtual class
-class TaxonResult(entrezpy.base.result.EutilsResult):
+class NamesResult(entrezpy.base.result.EutilsResult):
   def __init__(self, response, request):
     super().__init__(request.eutil, request.query_id, request.db)
     self.taxon_names = set()

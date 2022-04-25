@@ -1,0 +1,18 @@
+[secrets]
+api_key = "your-api-key-here" # NCBI api key is required for the script to run
+db_host = "localhost"
+db_port = 3306
+db_pw = "hunter2"
+email = "benny.zhao@agr.gc.ca" # developer (not end user) contact email given to ncbi
+
+[download]
+use_threads = false
+threads = 50 # optimal number will vary for different machines, too high can crash/freeze
+# set to true to download from these databases
+biosample = true
+bioproject = true
+sra = true
+
+[logging]
+level = "INFO" # can be DEBUG, INFO, WARNING, ERROR
+
