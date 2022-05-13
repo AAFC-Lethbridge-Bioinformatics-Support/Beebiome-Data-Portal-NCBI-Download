@@ -4,7 +4,7 @@ Description=NCBI-Download
 
 [Service]
 Type=simple
-ExecStart=/home/--/BeeBiome-Data-Portal-Scripts/NCBI-Download/gcp/download.sh
+ExecStart=/root/Beebiome-Data-Portal-NCBI-Download/gcp/run.sh
 
 [Install]
 WantedBy=multi-user.target
