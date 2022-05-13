@@ -1,0 +1,3 @@
+[submodule "entrezpy"]
+	path = entrezpy
+	url = https://github.com/zhaobenny/entrezpy-fork.git
