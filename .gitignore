@@ -4,6 +4,7 @@
 NCBI-xmls-downloads
 NCBI_xmls_downloads
 config.toml
+*.log
 
 # dev
 dev

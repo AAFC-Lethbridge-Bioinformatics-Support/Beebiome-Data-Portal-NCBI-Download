@@ -1,0 +1,10 @@
+[Unit]
+After=network.service
+Description=NCBI-Download
+
+[Service]
+Type=simple
+ExecStart=/home/--/BeeBiome-Data-Portal-Scripts/NCBI-Download/gcp/download.sh
+
+[Install]
+WantedBy=multi-user.target
