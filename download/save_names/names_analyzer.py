@@ -4,7 +4,7 @@ import entrezpy.base.analyzer
 import xml.etree.ElementTree
 
 # implement the virtual class
-class NamesAnalyzer(entrezpy.base.analyzer.EutilsAnalyzer):
+class SaveNames(entrezpy.base.analyzer.EutilsAnalyzer):
     def __init__(self):
         super().__init__()
 
