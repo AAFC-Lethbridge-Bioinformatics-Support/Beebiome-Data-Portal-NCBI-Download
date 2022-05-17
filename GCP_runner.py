@@ -39,5 +39,4 @@ except Exception as e:
     logger.critical(e, exc_info=True)  # failsafe
 
 # stop the machine script is running on
-subprocess.call(["gcloud", "stop", "instance", "ncbi-download",
-                "--zone", "us-central1-a", "--q"])
+subprocess.call(["shutdown"])
