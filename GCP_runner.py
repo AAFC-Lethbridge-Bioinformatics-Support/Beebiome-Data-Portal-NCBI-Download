@@ -30,7 +30,7 @@ try:
         subprocess.run(["rm", "-rf", oldest_file])
 
     # Remove oldest log file
-    files = [os.path.join("./logs/", file) for file in os.listdir("./logs/")]
+    files = [os.path.join("/var/log/ncbi_download/", file) for file in os.listdir("/var/log/ncbi_download")]
     if len(files) >= 6:
         oldest_file = min(files, key=os.path.getmtime)
         subprocess.run(["rm", oldest_file])
