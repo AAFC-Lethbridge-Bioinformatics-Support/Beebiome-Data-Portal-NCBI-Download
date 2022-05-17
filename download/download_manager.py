@@ -11,6 +11,9 @@ from download.queries import get_names, run_one_query
 logger = logging.getLogger(__name__)
 manager = enlighten.get_manager()
 
+def download(filepath, config):
+    """ Wrapper for DownloadManager """
+    DownloadManager(filepath, config).download()
 
 class DownloadManager:
     def __init__(self, filepath, config):

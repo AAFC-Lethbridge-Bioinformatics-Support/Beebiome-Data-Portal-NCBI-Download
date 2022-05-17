@@ -6,17 +6,13 @@ from datetime import datetime
 import toml
 
 from upload.upload import upload
-from download.download_manager import DownloadManager
+from download.download_manager import download
 
 config = toml.load("config.toml")
 runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-logging.basicConfig(level=config['logging']['level'], filename=f'./logs/logfile_{runtime_timestamp}.log',
+logging.basicConfig(level=config['logging']['level'],
                     format="%(asctime)s [%(levelname)-8s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
-
-def download(filepath, config):
-    """ Wrapper for DownloadManager """
-    DownloadManager(filepath, config).download()
 
 def main(taxon="Apoidea", filepath=None):
     logger.info("Starting download of {}".format(taxon))
