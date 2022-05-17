@@ -2,16 +2,14 @@ import logging
 import os
 import shutil
 import subprocess
-
 import google.cloud.logging
-
-from main import main as main_script
-
-logger = logging.getLogger(__name__)
 
 client = google.cloud.logging.Client()
 client.setup_logging()
 
+from main import main as main_script
+
+logger = logging.getLogger(__name__)
 
 
 """
@@ -20,7 +18,6 @@ Wrapper script for running in GCP.
 
 download_folder = "./NCBI_xmls_downloads"
 try:
-
     main_script()
 
     # Compressed downloaded files
@@ -42,4 +39,5 @@ except Exception as e:
     logger.critical(e, exc_info=True)  # failsafe
 
 # stop the machine script is running on
-subprocess.call(["gcloud", "stop", "instance", "ncbi-download", "--zone", "us-central1-a", "--q"])
+subprocess.call(["gcloud", "stop", "instance", "ncbi-download",
+                "--zone", "us-central1-a", "--q"])

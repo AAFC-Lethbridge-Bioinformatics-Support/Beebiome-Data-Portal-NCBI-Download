@@ -25,6 +25,7 @@ def main(taxon="Apoidea", filepath=None):
     except OSError:
         exit(logger.error("Creation of the directory %s failed" % filepath))
 
+    logger.info("Starting download process of NCBI XMLs")
     download(filepath, config)
 
     upload_db = False

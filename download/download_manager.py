@@ -86,7 +86,6 @@ class DownloadManager:
 
     def download(self):
         """ Starts the download of XML files from NCBI """
-
         queries = self.make_queries()
 
         queries_total = len(queries)
