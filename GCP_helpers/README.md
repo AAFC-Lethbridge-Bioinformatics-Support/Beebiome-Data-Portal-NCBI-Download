@@ -4,7 +4,7 @@ https://stackoverflow.com/questions/64526826/how-to-schedule-longer-python-scrip
 
 https://code.luasoftware.com/tutorials/linux/auto-start-python-script-on-boot-systemd/
 
-run sudo -i when ssh into the gcp compute instance, scripts should be stored in root
+run sudo -i when ssh into the gcp compute instance, scripts should be stored in srv
 
 follow normal install instructions
 
