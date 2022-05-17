@@ -19,11 +19,8 @@ def main(taxon="Apoidea", filepath=None):
 
     if filepath is None:
         filepath = f'./NCBI_xmls_downloads/{taxon}_download_({runtime_timestamp})'
-
-    try:
         os.makedirs(filepath, exist_ok=True)
-    except OSError:
-        exit(logger.error("Creation of the directory %s failed" % filepath))
+
 
     logger.info("Starting download process of NCBI XMLs")
     download(filepath, config)

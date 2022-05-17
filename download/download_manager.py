@@ -37,7 +37,8 @@ class DownloadManager:
         config = self.config
 
         if (config["secrets"]["api_key"] is None or config["secrets"]["api_key"] == "your-api-key-here"):
-            exit(logger.error("No API key provided in config"))
+            logger.error("No API key provided in config")
+            raise RuntimeError("No API key provided in config file")
         elif (config["secrets"]["email"] is None or config["secrets"]["email"] == ""):
             logger.warning("No dev contact email provided in config")
 
