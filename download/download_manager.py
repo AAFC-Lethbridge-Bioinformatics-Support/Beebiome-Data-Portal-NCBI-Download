@@ -37,7 +37,8 @@ class DownloadManager:
         config = self.config
 
         if (config["secrets"]["api_key"] is None or config["secrets"]["api_key"] == "your-api-key-here"):
-            exit(logger.error("No API key provided in config"))
+            logger.error("No API key provided in config")
+            raise RuntimeError("No API key provided in config file")
         elif (config["secrets"]["email"] is None or config["secrets"]["email"] == ""):
             logger.warning("No dev contact email provided in config")
 
@@ -51,9 +52,10 @@ class DownloadManager:
 
     def make_queries(self):
         """ Retrieves a list of names in a given subtree and splits them into queries """
-
         taxon = self.config["taxon"]
         names_filepath = self.filepath + f'/{taxon}_names.json'
+
+        logger.info("Retrieving names from NCBI")
         proc = Process(target=get_names, args=(
             self.filepath, taxon, self.ncbi_connection))
         proc.start()
@@ -85,7 +87,6 @@ class DownloadManager:
 
     def download(self):
         """ Starts the download of XML files from NCBI """
-
         queries = self.make_queries()
 
         queries_total = len(queries)
@@ -104,7 +105,7 @@ class DownloadManager:
         # Running child processes sequentially to not overload our API key quota
         for index, proc in enumerate(procs):
             index += 1
-            logger.debug(f'Running query {index} out of {queries_total}')
+            logger.info(f'Running query {index} out of {queries_total}')
             proc.start()
             proc.join()
             proc.close()

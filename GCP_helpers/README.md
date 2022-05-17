@@ -6,6 +6,6 @@ https://code.luasoftware.com/tutorials/linux/auto-start-python-script-on-boot-sy
 
 run sudo -i when ssh into the gcp compute instance, scripts should be stored in root
 
-follow normal install instructions
+follow normal install instructions, create using a venv
 
 chmod +6 the run bash script

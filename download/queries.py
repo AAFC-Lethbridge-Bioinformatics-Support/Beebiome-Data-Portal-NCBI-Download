@@ -94,7 +94,7 @@ def run_related_queries(filepath, db, query, query_num, ncbi_connection):
 
     for index, proc in enumerate(procs):
         index += 1
-        logger.debug(
+        logger.info(
             f'Running {db} subquery {index} of {total_chunks} for query {query_num}')
         proc.start()
         proc.join()

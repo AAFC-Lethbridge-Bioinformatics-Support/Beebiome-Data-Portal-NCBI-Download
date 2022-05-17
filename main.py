@@ -10,22 +10,19 @@ from download.download_manager import download
 
 config = toml.load("config.toml")
 runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-logging.basicConfig(level=config['logging']['level'],
+logging.basicConfig(level=config['logging']['level'], filename=f'./logs/logfile_{runtime_timestamp}.log',
                     format="%(asctime)s [%(levelname)-8s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 def main(taxon="Apoidea", filepath=None):
-    logger.info("Starting download of {}".format(taxon))
     config["taxon"] = taxon
 
     if filepath is None:
         filepath = f'./NCBI_xmls_downloads/{taxon}_download_({runtime_timestamp})'
-
-    try:
         os.makedirs(filepath, exist_ok=True)
-    except OSError:
-        exit(logger.error("Creation of the directory %s failed" % filepath))
 
+
+    logger.info("Starting download process of NCBI XMLs")
     download(filepath, config)
 
     upload_db = False
