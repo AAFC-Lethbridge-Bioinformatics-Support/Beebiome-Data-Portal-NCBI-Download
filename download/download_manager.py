@@ -51,9 +51,10 @@ class DownloadManager:
 
     def make_queries(self):
         """ Retrieves a list of names in a given subtree and splits them into queries """
-
         taxon = self.config["taxon"]
         names_filepath = self.filepath + f'/{taxon}_names.json'
+
+        logger.info("Retrieving names from NCBI")
         proc = Process(target=get_names, args=(
             self.filepath, taxon, self.ncbi_connection))
         proc.start()
@@ -104,7 +105,7 @@ class DownloadManager:
         # Running child processes sequentially to not overload our API key quota
         for index, proc in enumerate(procs):
             index += 1
-            logger.debug(f'Running query {index} out of {queries_total}')
+            logger.info(f'Running query {index} out of {queries_total}')
             proc.start()
             proc.join()
             proc.close()

@@ -15,7 +15,6 @@ logging.basicConfig(level=config['logging']['level'],
 logger = logging.getLogger(__name__)
 
 def main(taxon="Apoidea", filepath=None):
-    logger.info("Starting download of {}".format(taxon))
     config["taxon"] = taxon
 
     if filepath is None:
