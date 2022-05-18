@@ -9,9 +9,9 @@ from upload.upload import upload
 from download.download_manager import download
 
 config = toml.load("config.toml")
-runtime_timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+runtime_timestamp = datetime.now().strftime("%Y-%m-%d %H-%M")
 logging.basicConfig(level=config['logging']['level'], filename=f'/var/log/ncbi_download/{runtime_timestamp}_run.log',
-                    format="%(asctime)s [%(levelname)s] %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
+                    format="%(asctime)s [%(levelname)s] %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
 logger = logging.getLogger(__name__)
 
 def main(taxon="Apoidea", filepath=None):
