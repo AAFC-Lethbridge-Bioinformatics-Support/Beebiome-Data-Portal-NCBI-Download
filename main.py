@@ -10,7 +10,7 @@ from download.download_manager import download
 
 config = toml.load("config.toml")
 runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-logging.basicConfig(level=config['logging']['level'], filename=f'/var/log/ncbi_download/{runtime_timestamp}_run.log',
+logging.basicConfig(level=config['logging']['level'], filename=config['logging']['filepath'].format(runtime_timestamp),
                     format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
 logger = logging.getLogger(__name__)
 
