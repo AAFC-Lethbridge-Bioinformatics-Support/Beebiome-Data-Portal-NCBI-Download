@@ -18,9 +18,8 @@ def main(taxon="Apoidea", filepath=None):
     config["taxon"] = taxon
 
     if filepath is None:
-        filepath = f'./NCBI_xmls_downloads/{taxon}_download_({runtime_timestamp})'
+        filepath = f'./data/{taxon}_({runtime_timestamp})_run'
         os.makedirs(filepath, exist_ok=True)
-
 
     logger.info("Starting download process of NCBI XMLs")
     download(filepath, config)

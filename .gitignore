@@ -1,10 +1,9 @@
 # do not save data downloaded to github
 *.json
 *.xml
-NCBI-xmls-downloads
-NCBI_xmls_downloads
 config.toml
 *.log
+data
 
 # dev
 dev

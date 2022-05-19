@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 Wrapper script for running in GCP.
 """
 
-download_folder = "./NCBI_xmls_downloads"
+download_folder = "./data"
 try:
     main_script()
 
