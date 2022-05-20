@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import os
 from datetime import datetime
@@ -10,9 +11,16 @@ from download.download_manager import download
 
 config = toml.load("config.toml")
 runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-logging.basicConfig(level=config['logging']['level'], filename=config['logging']['filepath'].format(runtime_timestamp),
-                    format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
+
+if config["logging"]["log_file"] == "" or config["logging"]["log_file"] is None:
+    logging.basicConfig(level=config['logging']['level'],
+                        format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
+else:
+    logging.basicConfig(level=config['logging']['level'], filename=config['logging']['filepath'].format(runtime_timestamp),
+                        format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
+
 logger = logging.getLogger(__name__)
+
 
 def main(taxon="Apoidea", filepath=None):
     config["taxon"] = taxon
@@ -21,7 +29,16 @@ def main(taxon="Apoidea", filepath=None):
         filepath = f'./data/{taxon}_({runtime_timestamp})_run'
         os.makedirs(filepath, exist_ok=True)
 
-    logger.info("Starting download process of NCBI XMLs")
+    os.makedirs(f"{filepath}/biosamples/")
+    os.makedirs(f"{filepath}/bioprojects/")
+
+    with open(f"{filepath}/biosamples/biosample_UIDs.json", "w") as file:
+        json.dump([], file)
+
+    with open(f"{filepath}/bioprojects/bioproject_UIDs.json", "w") as file:
+        json.dump([], file)
+
+    logger.info("Starting download process")
     download(filepath, config)
 
     upload_db = False

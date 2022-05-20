@@ -1,23 +1,27 @@
 import json
 import logging
+import os
 import re
 from multiprocessing import Process
 
 import enlighten
 import entrezpy.conduit
 
-from download.queries import get_names, run_one_query
+from download.helpers import download_file, get_names
+from download.query import Query
 
 logger = logging.getLogger(__name__)
 manager = enlighten.get_manager()
+
 
 def download(filepath, config):
     """ Wrapper for DownloadManager """
     DownloadManager(filepath, config).download()
 
+
 class DownloadManager:
     def __init__(self, filepath, config):
-        """ Manager for downloading XML files from NCBI
+        """ Manager for downloading XML files and UIDs from NCBI
 
             Args:
                 filepath: Filepath to the folder where the XML files will be downloaded
@@ -49,6 +53,55 @@ class DownloadManager:
             conduit = entrezpy.conduit.Conduit(
                 config["secrets"]["email"], apikey=config["secrets"]["api_key"])
         return conduit
+
+    def download(self):
+        """ Starts the download of XML files/UIDs from NCBI
+
+            Uses multiprocessing to reclaim memory/threads (prevent memleak from Requests downloading files) after each query
+
+            (Multiprocessing ran sequentially to not overload our API key quota)
+
+        """
+        queries = self.make_queries()
+
+        queries_total = len(queries)
+        queries_progress = manager.counter(
+            total=queries_total, unit='Query', desc='Queries', leave=False)
+        procs = []
+        ftp_procs = self.start_ftp_downloads()
+
+        for index, query in enumerate(queries):
+            index += 1
+            proc = Query(self.ncbi_connection, self.filepath, query, index)
+            procs.append(proc)
+
+        for index, proc in enumerate(procs):
+            index += 1
+            logger.info(f'Running query {index} out of {queries_total}')
+            proc.start()
+            proc.join()
+            if proc.exitcode != 0:
+                logger.error(f'Query {index} failed')
+                raise RuntimeError("Children process exited unexpectedly")
+            proc.close()
+            queries_progress.update()
+
+        logger.info("All queries finished")
+        logger.info("Checking if FTP downloads finished...")
+        for proc in ftp_procs:
+            proc.join()
+            if proc.exitcode != 0:
+                logger.error( f'FTP download {proc.name} exited unexpectedly')
+                raise RuntimeError("Children process exited unexpectedly")
+            proc.close()
+        logging.info("FTP downloads finished")
+
+        queries_progress.close()
+        manager.stop()
+        logger.info(
+            f'Finished running {queries_total} queries. Check folders for any errors.')
+
+        return
 
     def make_queries(self):
         """ Retrieves a list of names in a given subtree and splits them into queries """
@@ -85,35 +138,17 @@ class DownloadManager:
                 query += " OR (" + name + " NOT " + name + "[Organism])"
         return queries
 
-    def download(self):
-        """ Starts the download of XML files from NCBI """
-        queries = self.make_queries()
+    def start_ftp_downloads(self):
+        """ Starts the FTP download of Biosample/Bioprojects from NCBI
 
-        queries_total = len(queries)
-        queries_progress = manager.counter(
-            total=queries_total, unit='Query', desc='Queries', leave=False)
-        procs = []
+            Faster to download entire BioProjects/Biosamples at once, then filter them out by UIDs compared to querying API for individual records
+        """
+        proc1 = Process(name="bioproject-dl", target=download_file, args=(
+            "https://ftp.ncbi.nlm.nih.gov/bioproject/bioproject.xml", os.path.join(self.filepath, "bioprojects")))
+        proc2 = Process(name="biosample-dl", target=download_file, args=(
+            "https://ftp.ncbi.nlm.nih.gov/biosample/biosample_set.xml.gz", os.path.join(self.filepath, "biosamples")))
+        proc1.start()
+        proc2.start()
+        return [proc1, proc2]
 
-        for index, query in enumerate(queries):
-            # https://stackoverflow.com/questions/14270053/python-requests-not-clearing-memory-when-downloading-with-sessions
-            # Spawn a child process to reclaim the memory after each query (or else memory leak)
-            index += 1
-            proc = Process(target=run_one_query, args=(
-                self.filepath, query, index, self.config, self.ncbi_connection))
-            procs.append(proc)
 
-        # Running child processes sequentially to not overload our API key quota
-        for index, proc in enumerate(procs):
-            index += 1
-            logger.info(f'Running query {index} out of {queries_total}')
-            proc.start()
-            proc.join()
-            proc.close()
-            queries_progress.update()
-
-        queries_progress.close()
-        manager.stop()
-        logger.info(
-            f'Finished running {queries_total} queries. Check folders for any errors.')
-
-        return
