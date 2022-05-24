@@ -12,7 +12,7 @@ from download.download_manager import download
 config = toml.load("config.toml")
 runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
 
-if config["logging"]["log_file"] == "" or config["logging"]["log_file"] is None:
+if config["logging"]["filepath"] == "" or config["logging"]["filepath"] is None:
     logging.basicConfig(level=config['logging']['level'],
                         format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
 else:
@@ -40,6 +40,8 @@ def main(taxon="Apoidea", filepath=None):
 
     logger.info("Starting download process")
     download(filepath, config)
+    logger.info(
+        f'Download process finished. Total time: {(datetime.now() - datetime.strptime(runtime_timestamp, "%Y-%m-%d_%H-%M"))/(60*60)} hours')
 
     upload_db = False
     if (taxon == "Apoidea" and upload_db):

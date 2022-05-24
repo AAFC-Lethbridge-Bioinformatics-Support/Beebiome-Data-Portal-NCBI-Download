@@ -99,7 +99,7 @@ class DownloadManager:
         queries_progress.close()
         manager.stop()
         logger.info(
-            f'Finished running {queries_total} queries. Check folders for any errors.')
+            f'Finished running {queries_total} queries')
 
         return
 
