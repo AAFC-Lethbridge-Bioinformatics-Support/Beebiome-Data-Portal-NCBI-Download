@@ -1,10 +1,15 @@
 ./entrezpy
 blessed==1.19.1
+certifi==2022.5.18.1
+charset-normalizer==2.0.12
 enlighten==1.10.2
+idna==3.3
 mysql-connector==2.2.9
 prefixed==0.3.2
 protobuf==3.20.1
+requests==2.27.1
 six==1.16.0
 toml==0.10.2
+urllib3==1.26.9
 wcwidth==0.2.5
 xmltodict==0.13.0
