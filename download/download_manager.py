@@ -6,7 +6,7 @@ from multiprocessing import Process
 import enlighten
 import entrezpy.conduit
 
-from download.queries import get_names, run_one_query
+from download.queries_helpers import get_names, run_one_query
 
 logger = logging.getLogger(__name__)
 manager = enlighten.get_manager()
@@ -50,41 +50,6 @@ class DownloadManager:
                 config["secrets"]["email"], apikey=config["secrets"]["api_key"])
         return conduit
 
-    def make_queries(self):
-        """ Retrieves a list of names in a given subtree and splits them into queries """
-        taxon = self.config["taxon"]
-        names_filepath = self.filepath + f'/{taxon}_names.json'
-
-        logger.info("Retrieving names from NCBI")
-        proc = Process(target=get_names, args=(
-            self.filepath, taxon, self.ncbi_connection))
-        proc.start()
-        proc.join()
-        proc.close()
-
-        with open(names_filepath, 'r') as f:
-            names = json.load(f)
-        logger.info(str(len(names)) + " names loaded from taxon-names.json")
-
-        queries = []
-        first = True
-        query = "host[Attribute Name] AND ("
-
-        for name in names:
-            # If query longer then ~40k characters - NCBI servers throws internal error, so we split it into multiple queries
-            if len(query) >= 20000:
-                query += ")"
-                queries.append(query)
-                query = "host[Attribute Name] AND ("
-                first = True
-            name = re.sub('[():,./\/]', '', name)
-            if first:
-                query += "(" + name + " NOT " + name + "[Organism])"
-                first = False
-            else:
-                query += " OR (" + name + " NOT " + name + "[Organism])"
-        return queries
-
     def download(self):
         """ Starts the download of XML files from NCBI """
         queries = self.make_queries()
@@ -114,6 +79,41 @@ class DownloadManager:
         queries_progress.close()
         manager.stop()
         logger.info(
-            f'Finished running {queries_total} queries. Check folders for any errors.')
+            f'Finished running {queries_total} queries')
 
         return
+
+    def make_queries(self):
+            """ Retrieves a list of names in a given subtree and splits them into queries """
+            taxon = self.config["taxon"]
+            names_filepath = self.filepath + f'/{taxon}_names.json'
+
+            proc = Process(target=get_names, args=(
+                self.filepath, taxon, self.ncbi_connection))
+            proc.start()
+            logger.info("Retrieving names from NCBI")
+            proc.join()
+            proc.close()
+
+            with open(names_filepath, 'r') as f:
+                names = json.load(f)
+            logger.info(str(len(names)) + " names loaded from taxon-names.json")
+
+            queries = []
+            first = True
+            query = "host[Attribute Name] AND ("
+
+            for name in names:
+                # If query longer then ~40k characters - NCBI servers throws internal error, so we split it into multiple queries
+                if len(query) >= 20000:
+                    query += ")"
+                    queries.append(query)
+                    query = "host[Attribute Name] AND ("
+                    first = True
+                name = re.sub('[():,./\/]', '', name)
+                if first:
+                    query += "(" + name + " NOT " + name + "[Organism])"
+                    first = False
+                else:
+                    query += " OR (" + name + " NOT " + name + "[Organism])"
+            return queries

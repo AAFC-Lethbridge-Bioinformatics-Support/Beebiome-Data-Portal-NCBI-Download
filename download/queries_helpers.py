@@ -7,7 +7,7 @@ from download.save_xmls.xml_analyzer import SaveXMLs
 
 logger = logging.getLogger(__name__)
 
-# TODO: Find a better code structure for this
+# Helper functions for download manager
 
 def divide_chunks(l, n):
     # looping till length l
@@ -39,7 +39,7 @@ def run_one_query(filepath, query, query_num, config, ncbi_connection):
         Given query ran on the biosample db first, and then uses the results to find related bioprojects and sra files.
         XML files are downloaded to the filepath given as part of the process.
     """
-    proc = Process(target=run_one_query_biosamples, args=(
+    proc = Process(target=get_biosamples, args=(
             filepath, query, query_num, ncbi_connection))
     proc.start()
     proc.join()
@@ -51,7 +51,7 @@ def run_one_query(filepath, query, query_num, config, ncbi_connection):
                             query, query_num, ncbi_connection)
     return
 
-def run_one_query_biosamples(filepath, query, query_num, ncbi_connection):
+def get_biosamples(filepath, query, query_num, ncbi_connection):
     pipeline = ncbi_connection.new_pipeline()
     biosample_result = pipeline.add_search(
         {'db': 'biosample', 'term': query, 'rettype': 'uilist'})
@@ -73,7 +73,7 @@ def run_related_queries(filepath, db, query, query_num, ncbi_connection):
                          'term': query,
                          'rettype': 'uilist'})
     analzyer = ncbi_connection.run(pipeline)
-    uids = sorted(list(set(analzyer.result.uids))) # TODO: Save the IDs from the last biosample search?
+    uids = sorted(list(set(analzyer.result.uids)))
 
     size = 1000
     if len(uids) >= size:

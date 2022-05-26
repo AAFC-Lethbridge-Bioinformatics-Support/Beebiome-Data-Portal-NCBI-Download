@@ -10,20 +10,26 @@ from download.download_manager import download
 
 config = toml.load("config.toml")
 runtime_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-logging.basicConfig(level=config['logging']['level'], filename=f'/var/log/ncbi_download/{runtime_timestamp}_run.log',
-                    format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
+if config["logging"]["filepath"] == "" or config["logging"]["filepath"] is None:
+    logging.basicConfig(level=config['logging']['level'],
+                        format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
+else:
+    logging.basicConfig(level=config['logging']['level'], filename=config['logging']['filepath'].format(runtime_timestamp),
+                        format="%(asctime)s %(levelname)s %(message)s", datefmt='%Y-%m-%d-%H:%M:%S')
 logger = logging.getLogger(__name__)
+
 
 def main(taxon="Apoidea", filepath=None):
     config["taxon"] = taxon
 
     if filepath is None:
-        filepath = f'./NCBI_xmls_downloads/{taxon}_download_({runtime_timestamp})'
+        filepath = f'./data/{taxon}_({runtime_timestamp})_run'
         os.makedirs(filepath, exist_ok=True)
-
 
     logger.info("Starting download process of NCBI XMLs")
     download(filepath, config)
+    logger.info(
+        f'Download process finished. Total time: {(datetime.now() - datetime.strptime(runtime_timestamp, "%Y-%m-%d_%H-%M"))/(60*60)} hours')
 
     upload_db = False
     if (taxon == "Apoidea" and upload_db):

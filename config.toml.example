@@ -14,4 +14,4 @@ sra = true
 
 [logging]
 level = "INFO" # can be DEBUG, INFO, WARNING, ERROR
-
+filepath = "/var/log/ncbi_download/{}_run.log"
