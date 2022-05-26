@@ -2,16 +2,48 @@
 import json
 import logging
 from datetime import datetime
+import os
 
 import mysql.connector
 import toml
 
-from .processing.bioproject_processing import BioprojectProcessor
-from .processing.biosample_processing import BiosampleProcessor
+from .processing.BioprojectDocument import BioprojectDocument
+from .processing.BiosampleDocument import BiosampleDocument
 
 
 config = toml.load("./config.toml")
 logger = logging.getLogger(__name__)
+
+def upload(filepath):
+    """
+        Args:
+            filepath: directory of run to be uploaded
+    """
+    logger.info("Processing and uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
+
+    filepath = "./data/Apoidea_(2022-05-24_10-44)_run"
+
+    bioprojects = BioprojectDocument(os.path.join(filepath, "/bioprojects/bioproject.xml")).tojson()
+    biosamples = BiosampleDocument(os.path.join(filepath, "biosamples/biosample_set.xml.gz")).tojson()
+
+    conn = mysql.connector.connect(
+        host=config["secrets"]["db_host"],
+        user=config["secrets"]["db_user"],
+        password=config["secrets"]["db_pw"],
+        database="data"
+    )
+
+    cur = conn.cursor()
+    stmt = "TRUNCATE TABLE Biosample; TRUNCATE TABLE Bioproject; TRUNCATE TABLE Publication; TRUNCATE TABLE SRA;"
+    cur.execute(stmt)
+
+    insert_biosamples(bioprojects, cur)
+    insert_bioprojects(biosamples, cur)
+
+
+    conn.commit()
+    cur.close()
+    logger.info("Upload to %s db finished", config["secrets"]["db_host"])
 
 def insert_biosamples(filepath, cur):
     records = json.load(open(filepath))
@@ -27,7 +59,7 @@ def insert_biosamples(filepath, cur):
             record['OrganismName'],
             record['Comment'],
             record['Attributes'],
-            str(record['Owner']),  # TODO: handle multiple owners case
+            record['Owner'],
             record['ContactName'],
             record['SampleName'],
             record['SRA']
@@ -75,28 +107,5 @@ def insert_bioprojects(filepath, cur):
             stmt = "INSERT INTO Publication (PublicationDate, DOI, Title, Journal, Authors, BioprojectID) VALUES (%s, %s, %s, %s, %s, LAST_INSERT_ID())"
             cur.execute(stmt, values)
 
-def upload(filepath):
-    logger.info("Processing and uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
-    conn = mysql.connector.connect(
-        host=config["secrets"]["db_host"],
-        user=config["secrets"]["db_user"],
-        password=config["secrets"]["db_pw"],
-        database="data"
-    )
-
-    cur = conn.cursor()
-    stmt = "TRUNCATE TABLE Biosample; TRUNCATE TABLE Bioproject; TRUNCATE TABLE Publication; TRUNCATE TABLE SRA"
-    cur.execute(stmt)
-
-    filepath = "./NCBI_xmls_downloads/Apoidea_download_(2022-05-10_12-51)"
-
-    bioprojects = BioprojectProcessor(filepath + "/bioproject").run()
-    biosamples = BiosampleProcessor(filepath + "/biosample").run()
-    insert_biosamples(bioprojects, cur)
-    insert_bioprojects(biosamples, cur)
-
-
-    conn.commit()
-    cur.close()
-    logger.info("Upload to %s db finished", config["secrets"]["db_host"])
-
+if __name__ == "__main__":
+    upload("ASdasd")
