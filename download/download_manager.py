@@ -5,8 +5,9 @@ from multiprocessing import Process
 
 import enlighten
 import entrezpy.conduit
+from download.queries.query import Query
 
-from download.queries_helpers import get_names, run_one_query
+from download.helper import get_names
 
 logger = logging.getLogger(__name__)
 manager = enlighten.get_manager()
@@ -63,8 +64,7 @@ class DownloadManager:
             # https://stackoverflow.com/questions/14270053/python-requests-not-clearing-memory-when-downloading-with-sessions
             # Spawn a child process to reclaim the memory after each query (or else memory leak)
             index += 1
-            proc = Process(target=run_one_query, args=(
-                self.filepath, query, index, self.config, self.ncbi_connection))
+            proc = Query(self.ncbi_connection, self.filepath, query, index)
             procs.append(proc)
 
         # Running child processes sequentially to not overload our API key quota
@@ -73,6 +73,9 @@ class DownloadManager:
             logger.info(f'Running query {index} out of {queries_total}')
             proc.start()
             proc.join()
+            if (proc.exitcode != 0):
+                 logger.error(f"Error in query {index}")
+                 raise RuntimeError("Children process exited unexpectedly")
             proc.close()
             queries_progress.update()
 
