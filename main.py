@@ -29,7 +29,7 @@ def main(taxon="Apoidea", filepath=None):
     logger.info("Starting download process of NCBI XMLs")
     download(filepath, config)
     logger.info(
-        f'Download process finished. Total time: {(datetime.now() - datetime.strptime(runtime_timestamp, "%Y-%m-%d_%H-%M"))/(60*60)} hours')
+        f'Download process finished. Total time taken: {(datetime.now() - datetime.strptime(runtime_timestamp, "%Y-%m-%d_%H-%M")).strftime("%H:%M:%S")}')
 
     upload_db = False
     if (taxon == "Apoidea" and upload_db):
