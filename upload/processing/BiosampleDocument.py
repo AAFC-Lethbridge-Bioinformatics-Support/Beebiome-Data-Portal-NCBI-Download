@@ -1,10 +1,10 @@
 import csv
+import datetime
 import gzip
 import logging
 import re
-import xml.etree.ElementTree as ET
+from lxml import etree as ET
 from typing import List, OrderedDict
-
 import toml
 import xmltodict
 
@@ -41,16 +41,18 @@ class BiosampleDocument(XMLDocument):
                 clean_record = {}
 
                 record = elm
+                id = record.attrib["id"]
 
-                parsed = (xmltodict.parse(ET.tostring(record)))[
-                    'BioSample']
-
-                if parsed['@id'] not in self.ids:
-                    logging.debug("Skipping Biosample record", parsed['@id'])
+                if id not in self.ids:
+                    print("Skipping Biosample record", id)
                     elm.clear()
                     continue
                 else:
-                    needed_ids.remove(parsed['@id'])
+                    print("Parsing Biosample record", id)
+                    needed_ids.remove(id)
+
+                parsed = (xmltodict.parse(ET.tostring(record)))[
+                    'BioSample']
 
                 # Start curation steps
 
@@ -154,5 +156,9 @@ class BiosampleDocument(XMLDocument):
 
 
 if __name__ == "__main__":
+    start = datetime.datetime.now()
     BiosampleDocument(
         "./data/Apoidea_(2022-05-24_10-44)_run/biosamples/biosample_set.xml.gz").tojson()
+    end = datetime.datetime.now()
+    # gives total time taken
+    print((end - start).strftime("%H:%M:%S"))
