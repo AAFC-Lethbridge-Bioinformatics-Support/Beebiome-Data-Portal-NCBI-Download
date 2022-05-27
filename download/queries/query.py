@@ -66,7 +66,7 @@ class Query(Process):
         for index, chunk in enumerate(chunks):
             index += 1
             logger.info(
-                f'Running related subqueries {index} of {total_chunks} for query {index}')
+                f'Running related subqueries {index} of {total_chunks} for query {bigindex}')
             chunk = list(set(chunk))
 
             proc = Process(target=Query.get_db_xmls, args=(config, 'sra', chunk))
