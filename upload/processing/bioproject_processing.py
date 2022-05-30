@@ -1,7 +1,7 @@
 import logging
 import os
 import xml.etree.ElementTree as ET
-from typing import OrderedDict
+from typing import Dict, List
 
 import toml
 import xmltodict
@@ -31,7 +31,6 @@ class BioprojectProcessor(Processor):
                         publicationrecord = {}
                         parsed = (xmltodict.parse(ET.tostring(record)))[
                             "DocumentSummary"]
-
                         project = parsed.get("Project", {})
 
                         projectid = (project.get(
@@ -56,18 +55,16 @@ class BioprojectProcessor(Processor):
                         else:
                             clean_record["Relevance"] = None
 
-                        submission = parsed.get("Submission", {})
-                        organization = (submission.get(
-                            "Description", {}).get("Organization"))
-
-                        if (isinstance(organization, OrderedDict)):
-                            organization = organization.get("Name")
-                            if (isinstance(organization, OrderedDict)):
-                                organization = (dict(organization)).get("#text")
-                        elif (isinstance(organization, list)):
+                        organization = (parsed.get("Submission", {}).get(
+                            "Description", {}).get("Organization", None))
+                        if isinstance(organization, List):
+                            # TODO: handle multiple organizations
                             organization = organization[0].get("Name")
-                            if (isinstance(organization, OrderedDict)):
-                                organization = (dict(organization))["#text"]
+                        elif (organization is not None):
+                            organization = organization.get("Name")
+
+                        if isinstance(organization, Dict):
+                            organization = organization.get("Name")
 
                         clean_record["Organization"] = organization
 

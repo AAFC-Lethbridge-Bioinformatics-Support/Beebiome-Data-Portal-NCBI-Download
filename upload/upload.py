@@ -6,8 +6,8 @@ from datetime import datetime
 import mysql.connector
 import toml
 
-from .processing.bioproject_processing import BioprojectProcessor
-from .processing.biosample_processing import BiosampleProcessor
+from processing.bioproject_processing import BioprojectProcessor
+from processing.biosample_processing import BiosampleProcessor
 
 
 config = toml.load("./config.toml")
@@ -76,7 +76,16 @@ def insert_bioprojects(filepath, cur):
             cur.execute(stmt, values)
 
 def upload(filepath):
-    logger.info("Processing and uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
+    filepath = "/home/benny/Beebiome-Data-Portal-NCBI-Download/data/Apoidea_(2022-05-26_16-52)_run"
+
+
+    logger.info("Processing bioproject/biosamples")
+
+    bioprojects = BioprojectProcessor(filepath + "/bioproject/").run()
+    biosamples = BiosampleProcessor(filepath + "/biosample/").run()
+
+    quit()
+    logger.info("Uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
     conn = mysql.connector.connect(
         host=config["secrets"]["db_host"],
         user=config["secrets"]["db_user"],
@@ -87,11 +96,6 @@ def upload(filepath):
     cur = conn.cursor()
     stmt = "TRUNCATE TABLE Biosample; TRUNCATE TABLE Bioproject; TRUNCATE TABLE Publication; TRUNCATE TABLE SRA"
     cur.execute(stmt)
-
-    filepath = "./NCBI_xmls_downloads/Apoidea_download_(2022-05-10_12-51)"
-
-    bioprojects = BioprojectProcessor(filepath + "/bioproject").run()
-    biosamples = BiosampleProcessor(filepath + "/biosample").run()
     insert_biosamples(bioprojects, cur)
     insert_bioprojects(biosamples, cur)
 
@@ -100,3 +104,5 @@ def upload(filepath):
     cur.close()
     logger.info("Upload to %s db finished", config["secrets"]["db_host"])
 
+if __name__ == "__main__":
+    upload("asd")

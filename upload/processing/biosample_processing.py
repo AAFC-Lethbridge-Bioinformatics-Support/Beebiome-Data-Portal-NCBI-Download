@@ -91,15 +91,15 @@ class BiosampleProcessor(Processor):
                         clean_record['Attributes'] = str(ET.tostring((attributes)))
 
                         owner = parsed.get('Owner', {})
-                        name = owner.get("Name")
-                        clean_record['Owner'] = None
-                        if (isinstance(name, OrderedDict)):
-                            clean_record['Owner'] = name.get('#text')
-                        elif (isinstance(name, list)):
+                        name = owner.get("Name", None)
+                        if (isinstance(name, list)):
                             # TODO: handle multiple names
-                            clean_record['Owner'] = name[0]
-                        elif (isinstance(name, str)):
-                            clean_record['Owner'] = name
+                            name = name[0]
+
+                        if (isinstance(name, OrderedDict) or isinstance(name, dict)):
+                            name = name.get('#text')
+
+                        clean_record['Owner'] = name
 
                         if (not isinstance(clean_record['Owner'], str) and clean_record['Owner'] is not None):
                             logger.error(
