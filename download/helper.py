@@ -1,17 +1,10 @@
 import json
 import logging
-import os
-import shutil
-
-import requests
-
-from download.save_names.names_analyzer import SaveNames
+from .queries.save_names.names_analyzer import SaveNames
 
 logger = logging.getLogger(__name__)
 
-"""
-    Helper functions for download manager
-"""
+# Helper function for download manager
 
 def get_names(filepath, taxon, ncbi_connection):
     pipeline = ncbi_connection.new_pipeline()
@@ -31,11 +24,3 @@ def get_names(filepath, taxon, ncbi_connection):
     with open(filepath, 'w') as f:
         json.dump(taxon_names, f)
     return filepath
-
-def download_file(url, filepath):
-    local_filename = os.path.join(filepath, url.split('/')[-1])
-    with requests.get(url, stream=True) as r:
-        r.raw.decode_content = True
-        with open(local_filename, 'wb') as f:
-            shutil.copyfileobj(r.raw, f,length=16*1024*1024)
-    return local_filename

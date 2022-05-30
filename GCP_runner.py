@@ -21,20 +21,20 @@ def main():
         for file in files:
             if os.path.isdir(file):
                 shutil.make_archive(file, 'zip', file)
-                subprocess.run(["rm", "-rf", os.path.join(file)])
+                shutil.rmtree(file)
 
         # Remove oldest run
         files = [os.path.join(download_folder, file)
                 for file in os.listdir(download_folder)]
         if len(files) >= 3:
             oldest_file = min(files, key=os.path.getmtime)
-            subprocess.run(["rm", "-rf", oldest_file])
+            shutil.rmtree(oldest_file)
 
         # Remove oldest log file
         files = [os.path.join("/var/log/ncbi_download/", file) for file in os.listdir("/var/log/ncbi_download")]
         if len(files) >= 6:
             oldest_file = min(files, key=os.path.getmtime)
-            subprocess.run(["rm", oldest_file])
+            os.remove(oldest_file)
 
     except Exception as e:
         logger.critical(e, exc_info=True)  # failsafe

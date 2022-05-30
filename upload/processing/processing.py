@@ -40,6 +40,9 @@ class Processor:
 
         pool = multiprocessing.Pool()
         results = pool.map(self._process_file, files)
+        pool.close()
+        pool.join()
+
         for result in results:
             record_list.extend(result)
 
@@ -47,7 +50,7 @@ class Processor:
         if (totalcount == 0):
             sys.exit(logger.error("No records found in %s" % (self.filepath)))
 
-        logger.debug("# total %s record processed: %d" % (self.datatype, totalcount))
+        print("# total %s record processed: %d" % (self.datatype, totalcount))
 
         # remove dupe records
         record_list = {json.dumps(d, sort_keys=True) for d in record_list}

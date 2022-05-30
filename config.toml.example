@@ -7,8 +7,9 @@ email = "benny.zhao@agr.gc.ca" # developer (not end user) contact email given to
 
 [download]
 use_threads = false
-threads = 50 # optimal number will vary for different machines, too high can crash/freeze (some ram required)
+threads = 100 # optimal number will vary for different machines, too high can crash/freeze (some ram required)
+# set to true to download from these databases
 
 [logging]
 level = "INFO" # can be DEBUG, INFO, WARNING, ERROR
-filepath = "/var/log/ncbi_download/{}_run.log" # leave blank for console output
+filepath = "/var/log/ncbi_download/{}_run.log"
