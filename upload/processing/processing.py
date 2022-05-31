@@ -59,8 +59,7 @@ class Processor:
         logger.info("# total unique %s records processed: %d"
                     % (self.datatype, len(record_list)))
 
-        savelocation = os.path.join(
-            os.path.dirname(self.filepath), "processed/")
+        savelocation = os.path.dirname(os.path.dirname(self.filepath))
         os.makedirs(savelocation, exist_ok=True)
         savefile = os.path.join(
             savelocation, ("%s_records.json" % self.datatype))
