@@ -28,7 +28,7 @@ class BioprojectProcessor(Processor):
                     for record in records:
                         filecount += 1
                         clean_record = {}
-                        publicationrecord = {}
+                        publication_dict = {}
                         parsed = (xmltodict.parse(ET.tostring(record)))[
                             "DocumentSummary"]
                         project = parsed.get("Project", {})
@@ -45,15 +45,13 @@ class BioprojectProcessor(Processor):
                         clean_record["Description"] = projectdescr.get(
                             "Description")
 
-                        relevance = None
-                        if record.find("Project/ProjectDescr/Relevance") is not None:
-                            relevance = record.find(
+
+                        clean_record["Relevance"] = None
+                        relevance = record.find(
                                 "Project/ProjectDescr/Relevance")
                         if relevance is not None:
                             clean_record["Relevance"] = str(
                                 ET.tostring((relevance)))
-                        else:
-                            clean_record["Relevance"] = None
 
                         organization = (parsed.get("Submission", {}).get(
                             "Description", {}).get("Organization", None))
@@ -75,48 +73,44 @@ class BioprojectProcessor(Processor):
                                 "Organization was not parsed as a string")
 
                         clean_record["DataTypeSet"] = None
-                        datatype = None
-                        if (record.find("Project/ProjectType/ProjectTypeSubmission/IntendedDataTypeSet/DataType") is not None):
-                            datatype = record.find(
-                                "Project/ProjectType/ProjectTypeSubmission/IntendedDataTypeSet/DataType")
-                            if datatype is not None:
-                                clean_record["DataTypeSet"] = str(
-                                    ET.tostring((datatype)))
+                        datatype = record.find("Project/ProjectType/ProjectTypeSubmission/IntendedDataTypeSet/DataType")
+                        if (datatype is not None):
+                            clean_record["DataTypeSet"] = str(ET.tostring((datatype)))
 
                         clean_record["publication"] = None
                         publication = projectdescr.get("Publication")
 
                         if publication is not None:
-                            publicationrecord["PublicationDate"] = None
-                            publicationrecord["DOI"] = None
-                            publicationrecord["Title"] = None
-                            publicationrecord["Journal"] = None
-                            publicationrecord["Authors"] = None
+                            publication_dict["PublicationDate"] = None
+                            publication_dict["DOI"] = None
+                            publication_dict["Title"] = None
+                            publication_dict["Journal"] = None
+                            publication_dict["Authors"] = None
 
                             if (isinstance(publication, list)):
                                 # TODO: handle multiple publications case
                                 publication = publication[0]
 
-                            publicationrecord["DOI"] = publication.get("@id")
-                            clean_record["publication"] = publicationrecord["DOI"]
-                            if (publicationrecord["DOI"]):
-                                publicationrecord["PublicationDate"] = publication.get(
+                            publication_dict["DOI"] = publication.get("@id")
+                            clean_record["publication"] = publication_dict["DOI"]
+                            if (publication_dict["DOI"]):
+                                publication_dict["PublicationDate"] = publication.get(
                                     "@date")
 
                                 citation = publication.get("StructuredCitation")
                                 if citation is not None:
-                                    publicationrecord["Title"] = citation.get(
+                                    publication_dict["Title"] = citation.get(
                                         "Title")
-                                    publicationrecord["Journal"] = citation.get(
+                                    publication_dict["Journal"] = citation.get(
                                         "Journal", {}).get("JournalTitle")
 
                                     authorset = record.find(
                                         "Project/ProjectDescr/Publication/StructuredCitation/AuthorSet")
                                     if authorset is not None:
-                                        publicationrecord["Authors"] = str(
+                                        publication_dict["Authors"] = str(
                                             ET.tostring((authorset)))
 
-                                clean_record["publication"] = publicationrecord
+                                clean_record["publication"] = publication_dict
 
                         clean_records.append(clean_record)
         return clean_records
