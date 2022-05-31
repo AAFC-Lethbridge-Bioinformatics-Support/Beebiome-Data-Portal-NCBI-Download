@@ -78,14 +78,11 @@ class BiosampleProcessor(Processor):
                         description = parsed.get('Description', {})
                         clean_record['OrganismName'] = description.get(
                             "Organism", {}).get("OrganismName")
-                        clean_record['TaxonomyID'] = description.get(
-                            "Organism", {}).get("taxonomy_id")
 
+                        clean_record['Comment'] = None
                         comment = (record.find('Description')).find('Comment')
                         if comment is not None:
                             clean_record['Comment'] = str(ET.tostring((comment)))
-                        else:
-                            clean_record['Comment'] = None
 
                         attributes = (record.find('Attributes'))
                         clean_record['Attributes'] = str(ET.tostring((attributes)))
@@ -106,6 +103,7 @@ class BiosampleProcessor(Processor):
                                 "Owner was not parsed as a string:\n %s ", clean_record["Owner"])
                             raise RuntimeError("Owner was not parsed as a string")
 
+                        clean_record['ContactName'] = None
                         contact = (owner.get("Contacts", {})).get("Contact")
                         if contact is not None:
                             if (isinstance(contact, List)):
@@ -116,14 +114,12 @@ class BiosampleProcessor(Processor):
                             lastname = name.get("Last")
                             if lastname is not None:
                                 clean_record['ContactName'] += " " + lastname
-                        else:
-                            clean_record['ContactName'] = None
 
                         ids = parsed['Ids']['Id']
                         clean_record['SampleName'] = None
                         clean_record['SRA'] = None
                         for id in ids:
-                            if (not isinstance(id, OrderedDict)):
+                            if (not isinstance(id, OrderedDict) and not isinstance(id, dict)):
                                 continue
                             else:
                                 if id.get("@db_label") == 'Sample name':
