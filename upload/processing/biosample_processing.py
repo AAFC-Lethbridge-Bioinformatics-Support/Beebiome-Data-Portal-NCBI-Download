@@ -1,4 +1,5 @@
 import csv
+import json
 import logging
 import os
 import re
@@ -128,5 +129,13 @@ class BiosampleProcessor(Processor):
                                     clean_record['SRA'] = id['#text']
 
                         clean_records.append(clean_record)
-        return clean_records
+        savelocation = os.path.join(os.path.dirname(filepath), "jsons")
+        if not os.path.exists(savelocation):
+            os.makedirs(savelocation, exist_ok=True)
+        savefile = os.path.join(savelocation, ("%s.json" % (
+            os.path.basename(filepath).split(".")[0])))
+        with open(savefile, 'w') as f:
+            json.dump(clean_records, f, indent=4)
+            f.flush()
+        return
 

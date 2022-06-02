@@ -48,15 +48,13 @@ def insert_bioprojects(filepath, cur):
         values = (
             record['BioprojectAccession'],
             record['ArchiveID'],
-            record['Archive'],
-            record['Title'],
+            record['ArchiveType'],
+            record['Name'],
             record['Description'],
-            record['Relevance'],
-            record['Organization'],
-            record['DataTypeSet'],
+
         )
-        stmt = "INSERT INTO Bioproject  (BioprojectAccession, ArchiveID, Archive, Title, \
-                Description, Relevance, Organization, DataTypeSet) \
+        stmt = "INSERT INTO Bioproject  (BioprojectAccession, ArchiveID, ArchiveType, Name, \
+                Description, ) \
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         cur.execute(stmt, values)
 
@@ -82,9 +80,10 @@ def upload(filepath):
     logger.info("Processing bioproject/biosamples")
 
     bioprojects = BioprojectProcessor(filepath + "/bioproject/").run()
+    quit()
+
     biosamples = BiosampleProcessor(filepath + "/biosample/").run()
 
-    quit()
     logger.info("Uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
     conn = mysql.connector.connect(
         host=config["secrets"]["db_host"],
