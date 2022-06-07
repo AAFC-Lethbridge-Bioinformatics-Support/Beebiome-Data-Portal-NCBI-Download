@@ -19,6 +19,62 @@ class BioprojectProcessor(Processor):
 
     @staticmethod
     def _process_file(filepath):
+        def process_pub(publication):
+            publication_dict = {}
+            publication_dict["Title"] = None
+            publication_dict["Journal"] = None
+            publication_dict["Year"] = None
+            publication_dict["Volume"] = None
+            publication_dict["Issue"] = None
+            publication_dict["PageStart"] = None
+            publication_dict["PageEnd"] = None
+            publication_dict["ExternalID"] = publication.get("@id")
+            publication_dict["Catalogue"] = publication.get("@DbType")
+            publication_dict["Status"] = publication.get("@status")
+            publication_dict["Authors"] = []
+
+            citation = publication.get("StructuredCitation")
+            if citation is None:
+                return publication_dict
+
+            publication_dict["Title"] = citation.get(
+                "Title")
+
+            journal = citation.get("Journal", {})
+            publication_dict["Journal"] = journal.get("JournalTitle")
+            publication_dict["Year"] = journal.get("Year")
+            publication_dict["Volume"] = journal.get("Volume")
+            publication_dict["Issue"] = journal.get("Issue")
+            publication_dict["PageStart"] = journal.get("PagesFrom")
+            publication_dict["PageEnd"] = journal.get("PagesTo")
+
+            authorset = citation.get(
+                "AuthorSet", {}).get("Author")
+
+            if authorset is not None:
+                authors = []
+                if (isinstance(authorset, list)):
+                    for author in authorset:
+                        parsed_author = {}
+                        parsed_author["First Name"] = author.get(
+                            "Name", {}).get("First")
+                        parsed_author["Last Name"] = author.get(
+                            "Name", {}).get("Last")
+                        parsed_author["Organization"] = author.get(
+                            "Consortium", None)
+                        authors.append(parsed_author)
+                else:
+                    parsed_author = {}
+                    parsed_author["First Name"] = authorset.get(
+                        "Name", {}).get("First")
+                    parsed_author["Last Name"] = authorset.get(
+                        "Name", {}).get("Last")
+                    parsed_author["Organization"] = authorset.get(
+                        "Consortium", None)
+                    authors.append(parsed_author)
+                publication_dict["Authors"] = authors
+            return publication_dict
+
         # XML parsing looks awful but it works
         records = []
         if filepath.endswith(".xml"):
@@ -30,7 +86,6 @@ class BioprojectProcessor(Processor):
                 for elem in elements:
                     filecount += 1
                     record = {}
-                    publication_dict = {}
                     parsed = (xmltodict.parse(ET.tostring(elem)))[
                         "DocumentSummary"]
                     project = parsed.get("Project", {})
@@ -74,58 +129,17 @@ class BioprojectProcessor(Processor):
                                 pass
                             record["locusprefixes"] = parsed_prefixes
 
-                        record["publication"] = None
+                        record["publication"] = []
                         publication = projectdescr.get("Publication")
 
                         if publication is not None:
-                            publication_dict["PublicationDate"] = None
-                            publication_dict["DOI"] = None
-                            publication_dict["Title"] = None
-                            publication_dict["Journal"] = None
-                            publication_dict["Authors"] = None
-
-                            if (isinstance(publication, list)):
-                                # TODO: handle multiple publications case
-                                publication = publication[0]
-
-                            publication_dict["DOI"] = publication.get("@id")
-                            record["publication"] = publication_dict["DOI"]
-                            if (publication_dict["DOI"]):
-                                publication_dict["PublicationDate"] = publication.get(
-                                    "@date")
-
-                                citation = publication.get("StructuredCitation")
-                                if citation is not None:
-                                    publication_dict["Title"] = citation.get(
-                                        "Title")
-                                    publication_dict["Journal"] = citation.get(
-                                        "Journal", {}).get("JournalTitle")
-
-                                    authorset = citation.get(
-                                        "AuthorSet", {}).get("Author")
-                                    if authorset is not None:
-                                        authors = []
-                                        if (isinstance(authorset, list)):
-                                            for author in authorset:
-                                                parsed_author = {}
-                                                parsed_author["First Name"] = author.get(
-                                                    "Name", {}).get("First")
-                                                parsed_author["Last Name"] = author.get(
-                                                    "Name", {}).get("Last")
-                                                parsed_author["Organization"] = author.get(
-                                                    "Consortium", None)
-                                                authors.append(parsed_author)
-                                        else:
-                                            parsed_author = {}
-                                            parsed_author["First Name"] = authorset.get(
-                                                "Name", {}).get("First")
-                                            parsed_author["Last Name"] = authorset.get(
-                                                "Name", {}).get("Last")
-                                            parsed_author["Organization"] = authorset.get(
-                                                "Consortium", None)
-                                            authors.append(parsed_author)
-                                        publication_dict["Authors"] = authors
-                                record["publication"] = publication_dict
+                            if isinstance(publication, list):
+                                for pub in publication:
+                                    record["publication"].append(
+                                        process_pub(pub))
+                            else:
+                                record["publication"].append(process_pub(
+                                    publication))
 
                         submission = parsed.get("Submission")
                         if (submission):
@@ -150,8 +164,10 @@ class BioprojectProcessor(Processor):
 
                             record["SubmissionID"] = submission.get(
                                 "@submission_id")
-                            record["DateSubmitted"] = submission.get("@submitted")
-                            record["DateUpdated"] = submission.get("@last_update")
+                            record["DateSubmitted"] = submission.get(
+                                "@submitted")
+                            record["DateUpdated"] = submission.get(
+                                "@last_update")
 
                         records.append(record)
         savelocation = os.path.join(os.path.dirname(filepath), "jsons")
