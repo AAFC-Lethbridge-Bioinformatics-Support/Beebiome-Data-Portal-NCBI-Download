@@ -1,7 +1,5 @@
-import json
 import multiprocessing
 import os
-import sys
 import toml
 import logging
 config = toml.load("./config.toml")
@@ -19,7 +17,6 @@ class Processor:
     def __init__(self, filepath, datatype):
         self.filepath = filepath
         self.datatype = datatype
-        self.jsonfile = None
 
     def _process_file(filepath):
         """ Process and parse a file """
@@ -41,4 +38,4 @@ class Processor:
         pool.imap_unordered(self._process_file, files)
         pool.close()
         pool.join()
-        return
+        return os.path.join(self.filepath, "jsons")

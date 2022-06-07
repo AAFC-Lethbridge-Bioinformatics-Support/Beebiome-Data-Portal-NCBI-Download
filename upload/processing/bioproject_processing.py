@@ -74,86 +74,86 @@ class BioprojectProcessor(Processor):
                                 pass
                             record["locusprefixes"] = parsed_prefixes
 
-                    record["publication"] = None
-                    publication = projectdescr.get("Publication")
+                        record["publication"] = None
+                        publication = projectdescr.get("Publication")
 
-                    if publication is not None:
-                        publication_dict["PublicationDate"] = None
-                        publication_dict["DOI"] = None
-                        publication_dict["Title"] = None
-                        publication_dict["Journal"] = None
-                        publication_dict["Authors"] = None
+                        if publication is not None:
+                            publication_dict["PublicationDate"] = None
+                            publication_dict["DOI"] = None
+                            publication_dict["Title"] = None
+                            publication_dict["Journal"] = None
+                            publication_dict["Authors"] = None
 
-                        if (isinstance(publication, list)):
-                            # TODO: handle multiple publications case
-                            publication = publication[0]
+                            if (isinstance(publication, list)):
+                                # TODO: handle multiple publications case
+                                publication = publication[0]
 
-                        publication_dict["DOI"] = publication.get("@id")
-                        record["publication"] = publication_dict["DOI"]
-                        if (publication_dict["DOI"]):
-                            publication_dict["PublicationDate"] = publication.get(
-                                "@date")
+                            publication_dict["DOI"] = publication.get("@id")
+                            record["publication"] = publication_dict["DOI"]
+                            if (publication_dict["DOI"]):
+                                publication_dict["PublicationDate"] = publication.get(
+                                    "@date")
 
-                            citation = publication.get("StructuredCitation")
-                            if citation is not None:
-                                publication_dict["Title"] = citation.get(
-                                    "Title")
-                                publication_dict["Journal"] = citation.get(
-                                    "Journal", {}).get("JournalTitle")
+                                citation = publication.get("StructuredCitation")
+                                if citation is not None:
+                                    publication_dict["Title"] = citation.get(
+                                        "Title")
+                                    publication_dict["Journal"] = citation.get(
+                                        "Journal", {}).get("JournalTitle")
 
-                                authorset = citation.get(
-                                    "AuthorSet", {}).get("Author")
-                                if authorset is not None:
-                                    authors = []
-                                    if (isinstance(authorset, list)):
-                                        for author in authorset:
+                                    authorset = citation.get(
+                                        "AuthorSet", {}).get("Author")
+                                    if authorset is not None:
+                                        authors = []
+                                        if (isinstance(authorset, list)):
+                                            for author in authorset:
+                                                parsed_author = {}
+                                                parsed_author["First Name"] = author.get(
+                                                    "Name", {}).get("First")
+                                                parsed_author["Last Name"] = author.get(
+                                                    "Name", {}).get("Last")
+                                                parsed_author["Organization"] = author.get(
+                                                    "Consortium", None)
+                                                authors.append(parsed_author)
+                                        else:
                                             parsed_author = {}
-                                            parsed_author["First Name"] = author.get(
+                                            parsed_author["First Name"] = authorset.get(
                                                 "Name", {}).get("First")
-                                            parsed_author["Last Name"] = author.get(
+                                            parsed_author["Last Name"] = authorset.get(
                                                 "Name", {}).get("Last")
-                                            parsed_author["Organization"] = author.get(
+                                            parsed_author["Organization"] = authorset.get(
                                                 "Consortium", None)
                                             authors.append(parsed_author)
-                                    else:
-                                        parsed_author = {}
-                                        parsed_author["First Name"] = authorset.get(
-                                            "Name", {}).get("First")
-                                        parsed_author["Last Name"] = authorset.get(
-                                            "Name", {}).get("Last")
-                                        parsed_author["Organization"] = authorset.get(
-                                            "Consortium", None)
-                                        authors.append(parsed_author)
-                                    publication_dict["Authors"] = authors
-                            record["publication"] = publication_dict
+                                        publication_dict["Authors"] = authors
+                                record["publication"] = publication_dict
 
-                    submission = parsed.get("Submission")
-                    if (submission):
-                        organization = (parsed.get("Submission", {}).get(
-                            "Description", {}).get("Organization", None))
-                        if isinstance(organization, List):
-                            # TODO: handle multiple organizations
-                            organization = organization[0].get("Name")
-                        elif (organization is not None):
-                            organization = organization.get("Name")
+                        submission = parsed.get("Submission")
+                        if (submission):
+                            organization = (parsed.get("Submission", {}).get(
+                                "Description", {}).get("Organization", None))
+                            if isinstance(organization, List):
+                                # TODO: handle multiple organizations
+                                organization = organization[0].get("Name")
+                            elif (organization is not None):
+                                organization = organization.get("Name")
 
-                        if isinstance(organization, Dict):
-                            organization = organization.get("Name")
+                            if isinstance(organization, Dict):
+                                organization = organization.get("Name")
 
-                        record["Submitter"] = organization
+                            record["Submitter"] = organization
 
-                        if (not (isinstance(record["Submitter"], str)) and record["Submitter"] is not None):
-                            logger.error(
-                                "Organization was not parsed as a string:\n %s ", record["Submitter"])
-                            raise RuntimeError(
-                                "Organization was not parsed as a string")
+                            if (not (isinstance(record["Submitter"], str)) and record["Submitter"] is not None):
+                                logger.error(
+                                    "Organization was not parsed as a string:\n %s ", record["Submitter"])
+                                raise RuntimeError(
+                                    "Organization was not parsed as a string")
 
-                        record["SubmissionID"] = submission.get(
-                            "@submission_id")
-                        record["DateSubmitted"] = submission.get("@submitted")
-                        record["DateUpdated"] = submission.get("@last_update")
+                            record["SubmissionID"] = submission.get(
+                                "@submission_id")
+                            record["DateSubmitted"] = submission.get("@submitted")
+                            record["DateUpdated"] = submission.get("@last_update")
 
-                    records.append(record)
+                        records.append(record)
         savelocation = os.path.join(os.path.dirname(filepath), "jsons")
         if not os.path.exists(savelocation):
             os.makedirs(savelocation, exist_ok=True)
