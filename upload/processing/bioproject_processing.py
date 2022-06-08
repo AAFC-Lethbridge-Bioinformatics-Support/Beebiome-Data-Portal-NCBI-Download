@@ -29,9 +29,9 @@ class BioprojectProcessor(Processor):
             publication_dict["PageStart"] = None
             publication_dict["PageEnd"] = None
             publication_dict["ExternalID"] = publication.get("@id")
-            publication_dict["Catalogue"] = publication.get("@DbType")
+            publication_dict["Catalogue"] = publication.get("DbType")
             publication_dict["Status"] = publication.get("@status")
-            publication_dict["Authors"] = []
+            publication_dict["authors"] = []
 
             citation = publication.get("StructuredCitation")
             if citation is None:
@@ -43,10 +43,29 @@ class BioprojectProcessor(Processor):
             journal = citation.get("Journal", {})
             publication_dict["Journal"] = journal.get("JournalTitle")
             publication_dict["Year"] = journal.get("Year")
-            publication_dict["Volume"] = journal.get("Volume")
-            publication_dict["Issue"] = journal.get("Issue")
-            publication_dict["PageStart"] = journal.get("PagesFrom")
-            publication_dict["PageEnd"] = journal.get("PagesTo")
+
+            #TODO: handle non-int values
+            volume = journal.get("Volume")
+            try:
+                publication_dict["Volume"] = int(volume)
+            except (ValueError, TypeError):
+                pass
+            issue = journal.get("Issue")
+            try:
+                publication_dict["Issue"] = int(issue)
+            except (ValueError, TypeError):
+                pass
+            pagesstart = journal.get("PagesFrom")
+            try:
+                publication_dict["PageStart"] = int(pagesstart)
+            except (ValueError, TypeError):
+                pass
+            pagesend = journal.get("PagesTo")
+            try:
+                publication_dict["PageEnd"] = int(pagesend)
+            except (ValueError, TypeError):
+                pass
+
 
             authorset = citation.get(
                 "AuthorSet", {}).get("Author")
@@ -56,23 +75,23 @@ class BioprojectProcessor(Processor):
                 if (isinstance(authorset, list)):
                     for author in authorset:
                         parsed_author = {}
-                        parsed_author["First Name"] = author.get(
+                        parsed_author["FirstName"] = author.get(
                             "Name", {}).get("First")
-                        parsed_author["Last Name"] = author.get(
+                        parsed_author["LastName"] = author.get(
                             "Name", {}).get("Last")
                         parsed_author["Organization"] = author.get(
                             "Consortium", None)
                         authors.append(parsed_author)
                 else:
                     parsed_author = {}
-                    parsed_author["First Name"] = authorset.get(
+                    parsed_author["FirstName"] = authorset.get(
                         "Name", {}).get("First")
-                    parsed_author["Last Name"] = authorset.get(
+                    parsed_author["LastName"] = authorset.get(
                         "Name", {}).get("Last")
                     parsed_author["Organization"] = authorset.get(
                         "Consortium", None)
                     authors.append(parsed_author)
-                publication_dict["Authors"] = authors
+                publication_dict["authors"] = authors
             return publication_dict
 
         # XML parsing looks awful but it works

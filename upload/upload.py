@@ -14,6 +14,7 @@ from processing.biosample_processing import BiosampleProcessor
 config = toml.load("./config.toml")
 logger = logging.getLogger(__name__)
 
+
 def insert_biosamples(filepath, cur):
     for file in os.scandir(filepath):
         records = json.load(open(file))
@@ -45,41 +46,84 @@ def insert_biosamples(filepath, cur):
 def insert_bioprojects(filepath, cur):
     for file in os.scandir(filepath):
         records = json.load(open(file))
-
         logger.info("Starting executing insert bioproject statements...")
         for record in records:
-            try:
-                values = (
+            values = (
                     record['BioprojectAccession'],
                     record['Name'],
                     record['Description'],
                     record['ArchiveType'],
                     record['ArchiveID'],
+                    record['SubmissionID'],
                     record['Submitter'],
                     record['DateSubmitted'],
                     record['DateUpdated'],
-                )
-            except:
-                raise
+            )
             stmt = "INSERT INTO Bioproject  (BioprojectAccession, Name, Description, ArchiveType, \
-                    ArchiveID, Submitter, DateSubmitted, DateUpdated) \
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                    ArchiveID, SubmissionID, Submitter, DateSubmitted, DateUpdated) \
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             cur.execute(stmt, values)
             bioproject_id = cur.lastrowid
-            print(bioproject_id)
-            continue
-            publication = record['publication']
-            if publication:
-                if publication['PublicationDate']:
-                    publication['PublicationDate'] = datetime.strptime(publication['PublicationDate'], f"%Y-%m-%dT%H:%M:%S%z").strftime("%Y-%m-%d")
+
+            resources = record['externallinks']
+            for resource in resources:
                 values = (
-                    publication['PublicationDate'],
-                    publication['DOI'],
+                    resource['Name'],
+                    resource['URL'],
+                    resource['Category']
+                )
+                stmt = "INSERT INTO BioProjResource (Name, URL, Category) VALUES (%s, %s, %s)"
+                cur.execute(stmt, values)
+                resource_id = cur.lastrowid
+
+                stmt = "INSERT INTO BioProjMap (BioprojectID, ResourceID) VALUES (%s, %s)"
+                cur.execute(stmt, (bioproject_id, resource_id))
+
+
+            publications = record['publication']
+            for publication in publications:
+                values = (
+                    publication['ExternalID'],
                     publication['Title'],
                     publication['Journal'],
-                    publication['Authors'],
+                    publication['Year'],
+                    publication['Volume'],
+                    publication['Issue'],
+                    publication['PageStart'],
+                    publication['PageEnd'],
+                    publication['Catalogue'],
+                    publication['Status'],
                 )
-                stmt = "INSERT INTO Publication (PublicationDate, DOI, Title, Journal, Authors, BioprojectID) VALUES (%s, %s, %s, %s, %s, LAST_INSERT_ID())"
+                stmt = "INSERT INTO BioProjPublication (ExternalID, Title, Journal, Year, Volume, Issue, PageStart, PageEnd, Catalogue, Status) \
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                cur.execute(stmt, values)
+                publication_id = cur.lastrowid
+
+                stmt = "INSERT INTO BioProjPublicationMap (BioprojectID, PublicationID) VALUES (%s, %s)"
+                cur.execute(stmt, (bioproject_id, publication_id))
+
+                authors = publication['authors']
+                for author in authors:
+                    values = (
+                        author['FirstName'],
+                        author['LastName'],
+                        author['Organization']
+                    )
+                    stmt = "INSERT INTO BioProjPubAuthor (FirstName, LastName, Organization) VALUES (%s, %s, %s)"
+                    cur.execute(stmt, values)
+                    author_id = cur.lastrowid
+
+                    stmt = "INSERT INTO BioProjPubAuthorMap (BioProjectPublicationID, BioProjectPublicationAuthorID) VALUES (%s, %s)"
+                    cur.execute(stmt, (publication_id, author_id))
+
+            prefixes = record['locusprefixes']
+            for prefix in prefixes:
+                values = (
+                    bioproject_id,
+                    prefix['LocusTagPrefix'],
+                    prefix['BiosampleID'],
+                )
+                stmt = "INSERT INTO BioProjLTPMap (BioprojectID, LocusTagPrefix, BiosampleID) VALUES (%s, %s, %s)"
                 cur.execute(stmt, values)
 
 def upload(filepath):
@@ -89,7 +133,7 @@ def upload(filepath):
     logger.info("Processing bioproject/biosamples")
 
     bioprojects = BioprojectProcessor(filepath + "/bioproject/").run()
-    # biosamples = BiosampleProcessor(filepath + "/biosample/").run()
+    #biosamples = BiosampleProcessor(filepath + "/biosample/").run()
 
 
     logger.info("Uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
@@ -101,10 +145,15 @@ def upload(filepath):
     )
 
     cur = conn.cursor()
-    cur.execute("SET FOREIGN_KEY_CHECKS = 0;")
-    stmt = "TRUNCATE TABLE Bioproject;"
-    cur.execute(stmt)
-    cur.execute("SET FOREIGN_KEY_CHECKS = 1;")
+    cur.execute("SET FOREIGN_KEY_CHECKS = 0")
+    cur.execute("TRUNCATE TABLE Bioproject")
+    cur.execute("TRUNCATE TABLE BioProjResource")
+    cur.execute("TRUNCATE TABLE BioProjPublication")
+    cur.execute("TRUNCATE TABLE BioProjPublicationMap")
+    cur.execute("TRUNCATE TABLE BioProjPubAuthor")
+    cur.execute("TRUNCATE TABLE BioProjPubAuthorMap")
+    cur.execute("TRUNCATE TABLE BioProjLTPMap")
+    cur.execute("SET FOREIGN_KEY_CHECKS = 1")
 
     bioprojects = "./data/Apoidea_(2022-05-26_16-52)_run/bioproject/jsons/"
     # insert_biosamples(biosamples, cur)
