@@ -159,6 +159,10 @@ class BioprojectProcessor(Processor):
                                     publication))
 
                         submission = parsed.get("Submission")
+                        record["Submitter"] = None
+                        record["SubmissionID"] = None
+                        record["DateSubmitted"] = None
+                        record["DateUpdated"] = None
                         if (submission):
                             organization = (parsed.get("Submission", {}).get(
                                 "Description", {}).get("Organization", None))
