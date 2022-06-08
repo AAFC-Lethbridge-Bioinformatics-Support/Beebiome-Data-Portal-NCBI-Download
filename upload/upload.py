@@ -88,7 +88,7 @@ def upload(filepath):
 
     logger.info("Processing bioproject/biosamples")
 
-    # bioprojects = BioprojectProcessor(filepath + "/bioproject/").run()
+    bioprojects = BioprojectProcessor(filepath + "/bioproject/").run()
     # biosamples = BiosampleProcessor(filepath + "/biosample/").run()
 
 
