@@ -103,6 +103,23 @@ class BioprojectProcessor(Processor):
                         record["Description"] = projectdescr.get(
                             "Description")
 
+                        externallink = projectdescr.get("ExternalLink", {})
+                        record["externallinks"] = []
+                        if externallink:
+                            if isinstance(externallink, list):
+                                for link in externallink:
+                                    parsed_link = {}
+                                    parsed_link["Name"] = link.get("@label")
+                                    parsed_link["URL"] = link.get("URL")
+                                    parsed_link["Category"] = link.get("@category")
+                                    record["externallinks"].append(parsed_link)
+                            elif isinstance(externallink, dict) or isinstance(externallink, OrderedDict):
+                                parsed_link = {}
+                                parsed_link["Name"] = link.get("@label")
+                                parsed_link["URL"] = link.get("URL")
+                                parsed_link["Category"] = link.get("@category")
+                                record["externallinks"].append(parsed_link)
+
                         locusprefix = projectdescr.get("LocusTagPrefix")
                         record["locusprefixes"] = []
                         if locusprefix:
@@ -115,7 +132,7 @@ class BioprojectProcessor(Processor):
                                             "#text")
                                         parsed_prefix["BiosampleID"] = prefix.get(
                                             "@biosample_id")
-                                    if (parsed_prefix["LocusTagPrefix"] and parsed_prefix["BiosampleID"]):
+                                    if (parsed_prefix["LocusTagPrefix"]):
                                         parsed_prefixes.append(parsed_prefix)
                             elif isinstance(locusprefix, dict) or isinstance(locusprefix, OrderedDict):
                                 parsed_prefix = {}
@@ -123,7 +140,7 @@ class BioprojectProcessor(Processor):
                                     "#text")
                                 parsed_prefix["BiosampleID"] = locusprefix.get(
                                     "@biosample_id")
-                                if (parsed_prefix["LocusTagPrefix"] and parsed_prefix["BiosampleID"]):
+                                if (parsed_prefix["LocusTagPrefix"]):
                                     parsed_prefixes.append(parsed_prefix)
                             else:
                                 pass
