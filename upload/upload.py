@@ -1,14 +1,12 @@
-
 import json
 import logging
-from datetime import datetime
 import os
 
 import mysql.connector
 import toml
 
-from processing.bioproject_processing import BioprojectProcessor
-from processing.biosample_processing import BiosampleProcessor
+from .processing.bioproject_processing import BioprojectProcessor
+from .processing.biosample_processing import BiosampleProcessor
 
 
 config = toml.load("./config.toml")
@@ -133,7 +131,7 @@ def upload(filepath):
     logger.info("Processing bioproject/biosamples")
 
     bioprojects = BioprojectProcessor(filepath + "/bioproject/").run()
-    #biosamples = BiosampleProcessor(filepath + "/biosample/").run()
+    biosamples = BiosampleProcessor(filepath + "/biosample/").run()
 
 
     logger.info("Uploading bioproject/biosamples to %s db...", config["secrets"]["db_host"])
@@ -156,13 +154,10 @@ def upload(filepath):
     cur.execute("SET FOREIGN_KEY_CHECKS = 1")
 
     bioprojects = "./data/Apoidea_(2022-05-26_16-52)_run/bioproject/jsons/"
-    # insert_biosamples(biosamples, cur)
+    insert_biosamples(biosamples, cur)
     insert_bioprojects(bioprojects, cur)
 
 
     conn.commit()
     cur.close()
     logger.info("Upload to %s db finished", config["secrets"]["db_host"])
-
-if __name__ == "__main__":
-    upload("afaf")
