@@ -1,5 +1,6 @@
 # 📚 NCBI-Download
 
+### This is an alternative download method that was developed and is not used currently
 Downloads biosamples and biosample-related xmls from NCBI using forked [entrezpy](https://entrezpy.readthedocs.io "Entrezpy offical docs") for Beebiome data portal.
 
 ## 🧰 Usage
