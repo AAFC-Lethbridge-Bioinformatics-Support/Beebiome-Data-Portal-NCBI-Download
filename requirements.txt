@@ -3,7 +3,7 @@ blessed==1.19.1
 enlighten==1.10.2
 mysql-connector-python==8.0.29
 prefixed==0.3.2
-protobuf==3.20.1
+protobuf==3.20.2
 six==1.16.0
 toml==0.10.2
 wcwidth==0.2.5
